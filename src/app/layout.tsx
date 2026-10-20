@@ -1,16 +1,10 @@
 import type { Metadata } from "next";
-import { Playfair_Display, DM_Sans, DM_Mono } from "next/font/google";
+import { DM_Sans, DM_Mono } from "next/font/google";
 import "./globals.css";
 
-// St. John's Lift Club brand fonts: Playfair Display for display type,
-// DM Sans for text, DM Mono for numbers and labels.
-const playfair = Playfair_Display({
-  variable: "--font-playfair",
-  subsets: ["latin"],
-  weight: ["700", "900"],
-  style: ["normal", "italic"],
-});
-
+// Type follows the St. John's Lift Club surfaces: DM Sans for everything
+// (headers are medium weight with tight tracking, like the clubhouse),
+// DM Mono for numbers and labels. No serif. Scott, 2026-10-20.
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
   subsets: ["latin"],
@@ -38,7 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={`${playfair.variable} ${dmSans.variable} ${dmMono.variable} h-full antialiased`}
+      className={`${dmSans.variable} ${dmMono.variable} h-full antialiased`}
     >
       <body className="min-h-full bg-gray-950">{children}</body>
     </html>

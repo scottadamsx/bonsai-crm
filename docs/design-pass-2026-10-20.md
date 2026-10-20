@@ -71,3 +71,7 @@ Rebuilt the UI against Scott's two spec docs: `~/workspace/ux-rules-16.md` (17 U
 
 - `npm run build` passes with TypeScript clean and all 13 routes generated. Local builds need placeholder Supabase env vars to prerender (pre-existing: the untouched baseline fails identically without them; Vercel has the real vars).
 - `npm run lint`: 40 problems after vs 42 before (all pre-existing `any`/hooks issues; this pass fixed two, added none). No test suite exists in this repo.
+
+## Amendment (2026-10-20, later): serif removed
+
+Scott rejected the serif outright: "I don't like the serif, I want the headers like things Lift Club." Checked against the clubhouse app (the Lift Club's own surface): its headings are a clean sans stack at weight 500, letter-spacing -0.015em, line-height 1.12. BONSAI now matches: Playfair Display is removed entirely (import, CSS variable, theme token). Page titles and the wordmark resolve to DM Sans; h1 carries weight 500, -0.015em tracking, 1.12 line height. DM Mono still carries numbers and labels. The "Lift Club fonts = Playfair" note in earlier records was wrong; Scott's direct statement and the clubhouse code are the spec.
