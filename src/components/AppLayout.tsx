@@ -19,6 +19,14 @@ import {
   Sprout,
 } from 'lucide-react'
 
+const MOBILE_TABS = [
+  { href: '/reminders', label: 'Inbox', icon: Inbox },
+  { href: '/contacts', label: 'Leads', icon: Users },
+  { href: '/pipeline', label: 'Pipeline', icon: Columns3 },
+  { href: '/activities', label: 'Activity', icon: Activity },
+  { href: '/', label: 'Home', icon: LayoutDashboard },
+]
+
 const NAV_ITEMS = [
   { href: '/reminders', label: 'Inbox', icon: Inbox },
   { href: '/contacts', label: 'Leads', icon: Users },
@@ -196,10 +204,33 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* Main content */}
       <main className="lg:pl-60">
-        <div className="p-4 md:p-6 max-w-7xl mx-auto">
+        <div className="p-4 md:p-6 pb-24 lg:pb-6 max-w-7xl mx-auto">
           {children}
         </div>
       </main>
+
+      {/* Mobile bottom nav, per the Close mobile spec: five thumb-reach tabs */}
+      <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-gray-900 border-t border-gray-800">
+        <div className="grid grid-cols-5">
+          {MOBILE_TABS.map((tab) => {
+            const active = pathname === tab.href ||
+              (tab.href !== '/' && pathname.startsWith(tab.href))
+            const Icon = tab.icon
+            return (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                className={`flex flex-col items-center justify-center gap-0.5 min-h-14 py-1.5 text-[11px] ${
+                  active ? 'text-green-400' : 'text-gray-400'
+                }`}
+              >
+                <Icon className="w-5 h-5" />
+                {tab.label}
+              </Link>
+            )
+          })}
+        </div>
+      </div>
     </div>
   )
 }
