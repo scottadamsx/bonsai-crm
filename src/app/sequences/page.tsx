@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import AppLayout from '@/components/AppLayout'
+import { Mail } from 'lucide-react'
 
 export default function SequencesPage() {
   const [sequences, setSequences] = useState<any[]>([])
@@ -50,7 +51,7 @@ export default function SequencesPage() {
                 selectedSeq?.id === seq.id ? 'border-green-500' : 'border-gray-800 hover:border-gray-700'
               }`}
             >
-              <div className="font-medium text-white">✉️ {seq.name}</div>
+              <div className="font-medium text-white flex items-center gap-2"><Mail className="w-4 h-4 text-green-400" /> {seq.name}</div>
               {seq.description && <div className="text-xs text-gray-400 mt-1">{seq.description}</div>}
             </div>
           ))}
@@ -87,7 +88,7 @@ export default function SequencesPage() {
               </div>
 
               <div className="mt-6 pt-4 border-t border-gray-800">
-                <h3 className="text-sm font-medium text-gray-300 mb-2">📧 Email Templates</h3>
+                <h3 className="text-sm font-medium text-gray-300 mb-2">Email Templates</h3>
                 <div className="space-y-2">
                   {templates.map((t) => (
                     <details key={t.id} className="bg-gray-800/50 rounded-lg">

@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import AppLayout from '@/components/AppLayout'
+import { ClipboardList, Mail, Pencil } from 'lucide-react'
 
 export default function SettingsPage() {
   const [stages, setStages] = useState<any[]>([])
@@ -67,7 +68,7 @@ export default function SettingsPage() {
       {/* Pipeline stages */}
       <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 mb-4">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-white">📋 Pipeline Stages</h2>
+          <h2 className="font-semibold text-white flex items-center gap-2"><ClipboardList className="w-4 h-4 text-green-400" /> Pipeline Stages</h2>
           <div className="flex gap-2">
             {['websites', 'clubs'].map((p) => (
               <button
@@ -115,7 +116,7 @@ export default function SettingsPage() {
       {/* Email templates */}
       <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-white">✉️ Email Templates</h2>
+          <h2 className="font-semibold text-white flex items-center gap-2"><Mail className="w-4 h-4 text-green-400" /> Email Templates</h2>
           <button
             onClick={() => setEditingTemplate({ name: '', subject: '', body: '' })}
             className="px-3 py-1.5 rounded-lg bg-green-500 hover:bg-green-600 text-white text-xs font-medium"
@@ -136,7 +137,7 @@ export default function SettingsPage() {
                   onClick={() => setEditingTemplate(t)}
                   className="text-gray-500 hover:text-white text-sm px-2"
                 >
-                  ✏️
+                  <Pencil className="w-4 h-4" />
                 </button>
                 <button
                   onClick={async () => {

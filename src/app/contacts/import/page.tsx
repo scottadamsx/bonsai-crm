@@ -52,17 +52,17 @@ export default function ImportPage() {
         category: row['category'] || null,
         contact_type: row['contact_type'] || row['type'] || 'prospect',
         website_status: row['website'] || row['website_status'] || null,
-        priority: row['priority']?.toLowerCase().includes('yes') || row['priority'] === '⭐' || false,
+        priority: row['priority']?.toLowerCase().includes('yes') || row['priority'] === '\u2B50' || false,
         notes: row['notes'] || null,
       }))
 
       const { error } = await supabase.from('contacts').insert(contacts)
       if (error) throw error
 
-      setResult(`✅ Imported ${contacts.length} contacts successfully!`)
+      setResult(`Imported ${contacts.length} contacts successfully.`)
       setCsv('')
     } catch (err: any) {
-      setResult(`❌ Error: ${err.message}`)
+      setResult(`Error: ${err.message}`)
     }
 
     setImporting(false)

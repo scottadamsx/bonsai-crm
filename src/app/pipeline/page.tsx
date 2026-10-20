@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import AppLayout from '@/components/AppLayout'
 import Link from 'next/link'
+import { Star, Phone } from 'lucide-react'
 import type { Deal, PipelineStage } from '@/lib/types'
 
 export default function PipelinePage() {
@@ -142,7 +143,7 @@ export default function PipelinePage() {
                           <span className="font-medium text-white text-sm truncate">
                             {deal.contact?.business_name || 'Unknown'}
                           </span>
-                          {deal.contact?.priority && <span className="text-yellow-400 text-xs">⭐</span>}
+                          {deal.contact?.priority && <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400 shrink-0" />}
                         </div>
                         <div className="text-xs text-gray-400 mt-1">
                           ${Number(deal.value || 0).toLocaleString()}
@@ -155,7 +156,7 @@ export default function PipelinePage() {
                           href={`tel:${deal.contact.phone}`}
                           className="text-xs text-green-400 hover:text-green-300 mt-1 inline-block"
                         >
-                          📞 {deal.contact.phone}
+                          <span className="inline-flex items-center gap-1"><Phone className="w-3 h-3" /> {deal.contact.phone}</span>
                         </a>
                       )}
                     </div>

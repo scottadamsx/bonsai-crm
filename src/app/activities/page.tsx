@@ -5,10 +5,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import AppLayout from '@/components/AppLayout'
 import Link from 'next/link'
-
-const ACTIVITY_ICONS: Record<string, string> = {
-  call: '📞', email: '✉️', sms: '💬', meeting: '🤝', note: '📝',
-}
+import ActivityIcon from '@/components/ActivityIcon'
 
 export default function ActivitiesPage() {
   const [activities, setActivities] = useState<any[]>([])
@@ -41,11 +38,11 @@ export default function ActivitiesPage() {
           className="px-4 py-2.5 rounded-lg bg-gray-900 border border-gray-700 text-white text-sm"
         >
           <option value="">All types</option>
-          <option value="call">📞 Calls</option>
-          <option value="email">✉️ Emails</option>
-          <option value="sms">💬 SMS</option>
-          <option value="meeting">🤝 Meetings</option>
-          <option value="note">📝 Notes</option>
+          <option value="call">Calls</option>
+          <option value="email">Emails</option>
+          <option value="sms">SMS</option>
+          <option value="meeting">Meetings</option>
+          <option value="note">Notes</option>
         </select>
       </div>
 
@@ -61,8 +58,8 @@ export default function ActivitiesPage() {
               href={`/contacts/${a.contact_id}`}
               className="flex gap-3 bg-gray-900 border border-gray-800 rounded-xl p-4 hover:border-gray-700"
             >
-              <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-xl shrink-0">
-                {ACTIVITY_ICONS[a.type] || '📝'}
+              <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center shrink-0 text-green-400">
+                <ActivityIcon type={a.type} className="w-5 h-5" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">

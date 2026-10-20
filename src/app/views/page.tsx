@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import AppLayout from '@/components/AppLayout'
 import Link from 'next/link'
+import { Filter, Star } from 'lucide-react'
 
 export default function SmartViewsPage() {
   const [views, setViews] = useState<any[]>([])
@@ -13,7 +14,16 @@ export default function SmartViewsPage() {
   const [activeView, setActiveView] = useState<string | null>(null)
   const supabase = createClient()
 
-  useEffect(() => { fetchViews() }, [])
+  useEffect(() => {
+    fetchViews().then(() => {
+      const runId = new URLSearchParams(window.location.search).get('run')
+      if (runId) {
+        supabase.from('smart_views').select('*').eq('id', runId).single()
+          .then(({ data }) => { if (data) runView(data) })
+      }
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const fetchViews = async () => {
     const { data } = await supabase.from('smart_views').select('*').order('name')
@@ -79,7 +89,7 @@ export default function SmartViewsPage() {
               }`}
               onClick={() => runView(view)}
             >
-              <span className="font-medium text-white text-sm">🔍 {view.name}</span>
+              <span className="font-medium text-white text-sm flex items-center gap-2"><Filter className="w-4 h-4 text-green-400" /> {view.name}</span>
               <button
                 onClick={(e) => { e.stopPropagation(); deleteView(view.id) }}
                 className="text-gray-500 hover:text-red-400 text-sm px-2"
@@ -94,15 +104,15 @@ export default function SmartViewsPage() {
         <div className="md:col-span-2">
           {results === null ? (
             <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 text-center">
-              <p className="text-gray-500">Select a view to see matching contacts.</p>
+              <p className="text-gray-500">Select a view to see matching leads.</p>
             </div>
           ) : results.length === 0 ? (
             <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 text-center">
-              <p className="text-gray-500">No contacts match this view.</p>
+              <p className="text-gray-500">No leads match this view.</p>
             </div>
           ) : (
             <div className="space-y-2">
-              <p className="text-sm text-gray-400">{results.length} contacts</p>
+              <p className="text-sm text-gray-400">{results.length} leads</p>
               {results.map((c) => (
                 <Link
                   key={c.id}
@@ -111,10 +121,10 @@ export default function SmartViewsPage() {
                 >
                   <div className="font-medium text-white text-sm">
                     {c.business_name || `${c.first_name} ${c.last_name}`}
-                    {c.priority && <span className="ml-1 text-yellow-400">⭐</span>}
+                    {c.priority && <Star className="inline w-3.5 h-3.5 ml-1 text-yellow-400 fill-yellow-400" />}
                   </div>
                   <div className="text-xs text-gray-400 mt-0.5">
-                    {c.phone && `📞 ${c.phone} · `}{c.category && `🏷️ ${c.category}`}
+                    {c.phone && `${c.phone} · `}{c.category}
                   </div>
                 </Link>
               ))}
@@ -179,7 +189,7 @@ function AddViewModal({ onClose }: { onClose: () => void }) {
               onChange={(e) => setPriorityOnly(e.target.checked)}
               className="w-4 h-4"
             />
-            ⭐ Priority only
+            <Star className="w-4 h-4 text-yellow-400" /> Priority only
           </label>
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-lg bg-gray-800 text-gray-300 text-sm hover:bg-gray-700">Cancel</button>
