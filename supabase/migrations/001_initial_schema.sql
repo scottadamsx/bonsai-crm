@@ -215,3 +215,17 @@ CREATE POLICY "authenticated_all" ON sequence_steps FOR ALL TO authenticated USI
 CREATE POLICY "authenticated_all" ON sequence_enrollments FOR ALL TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "authenticated_all" ON smart_views FOR ALL TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "authenticated_all" ON custom_field_defs FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- Supabase Oct 30 2026 change: new tables in the public schema need explicit
+-- grants, or the Data API returns "permission denied". Added proactively.
+grant all on public.contacts to authenticated, service_role;
+grant all on public.pipeline_stages to authenticated, service_role;
+grant all on public.deals to authenticated, service_role;
+grant all on public.activities to authenticated, service_role;
+grant all on public.reminders to authenticated, service_role;
+grant all on public.email_templates to authenticated, service_role;
+grant all on public.sequences to authenticated, service_role;
+grant all on public.sequence_steps to authenticated, service_role;
+grant all on public.sequence_enrollments to authenticated, service_role;
+grant all on public.smart_views to authenticated, service_role;
+grant all on public.custom_field_defs to authenticated, service_role;
