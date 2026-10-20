@@ -178,11 +178,11 @@ INSERT INTO pipeline_stages (name, position, color, pipeline) VALUES
 -- ============================================
 INSERT INTO email_templates (name, subject, body) VALUES
   ('Initial Outreach', 'Quick question about {{business_name}}''s website',
-   'Hi there,\n\nI noticed {{business_name}} doesn''t have a modern website. I build affordable websites for local businesses in St. John''s.\n\nHere''s my offer: I''ll build your website for free. If you love it, it''s $300 one-time plus $50/month for updates, backups, and support.\n\nNo risk, no obligation. Want to see what I''d build for you?\n\nBest,\nscott'),
+   'Hi there,\n\nI noticed {{business_name}} doesn''t have a modern website. I build affordable websites for local businesses in St. John''s.\n\nHere''s my offer: I''ll build your website for free. If you love it, it''s $300 one-time plus $50/month for updates, backups, and support.\n\nNo risk, no obligation. Want to see what I''d build for you?\n\nBest,\nscott\n\nNot interested? Just reply "no thanks" and I won''t reach out again.'),
   ('Follow-up Day 4', 'Following up - {{business_name}} website',
-   'Hi there,\n\nJust following up on my last email. I''d love to build a free mockup website for {{business_name}} so you can see what''s possible.\n\nIt takes me a couple days, costs you nothing to look at. Interested?\n\nBest,\nscott'),
+   'Hi there,\n\nJust following up on my last email. I''d love to build a free mockup website for {{business_name}} so you can see what''s possible.\n\nIt takes me a couple days, costs you nothing to look at. Interested?\n\nBest,\nscott\n\nNot interested? Just reply "no thanks" and I won''t reach out again.'),
   ('Follow-up Day 11', 'Last check-in - {{business_name}}',
-   'Hi there,\n\nI don''t want to be a pest, so this is my last follow-up. The offer stands: free website mockup, $300 only if you love it.\n\nIf timing''s not right, no worries. Just reply whenever.\n\nBest,\nscott');
+   'Hi there,\n\nI don''t want to be a pest, so this is my last follow-up. The offer stands: free website mockup, $300 only if you love it.\n\nIf timing''s not right, no worries. Just reply whenever.\n\nBest,\nscott\n\nNot interested? Just reply "no thanks" and I won''t reach out again.');
 
 -- ============================================
 -- DEFAULT SEQUENCE
