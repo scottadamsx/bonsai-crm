@@ -43,81 +43,115 @@ export default function ContactsPage() {
     return matchSearch && matchType && matchCategory
   })
 
-  const categories = [...new Set(contacts.map(c => c.category).filter(Boolean))]
+  const categories = [...new Set(contacts.map(c => c.category).filter((c): c is string => Boolean(c)))]
+
+  const pill = (active: boolean) =>
+    `min-h-11 px-4 rounded-full border text-sm transition-colors ${
+      active
+        ? 'bg-gray-100 border-gray-100 text-gray-950 font-medium'
+        : 'border-gray-800 text-gray-400 hover:text-white hover:border-gray-700'
+    }`
+
+  const typePills = [
+    { value: '', label: 'All types' },
+    { value: 'prospect', label: 'Prospects' },
+    { value: 'club', label: 'Clubs' },
+    { value: 'client', label: 'Clients' },
+  ]
 
   return (
     <AppLayout>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-white">Leads</h1>
-          <p className="text-gray-400 text-sm mt-1">{filtered.length} leads</p>
+          <h1 className="text-[28px] leading-9 font-bold text-white">Leads</h1>
+          <p className="font-mono text-xs uppercase tracking-[0.14em] text-gray-500 mt-1.5">{filtered.length} leads</p>
         </div>
         <button
           onClick={() => setShowAdd(true)}
-          className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-green-500 hover:bg-green-600 text-white font-medium text-sm"
+          className="flex items-center gap-1.5 px-4 min-h-11 rounded-lg bg-green-500 hover:bg-green-600 text-white font-medium text-sm"
         >
           <Plus className="w-4 h-4" /> Add Lead
         </button>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-4">
-        <input
-          type="text"
-          placeholder="Search name, phone, email..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 px-4 py-2.5 rounded-lg bg-gray-900 border border-gray-700 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-        />
-        <select
-          value={filterType}
-          onChange={(e) => setFilterType(e.target.value)}
-          className="px-4 py-2.5 rounded-lg bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-        >
-          <option value="">All types</option>
-          <option value="prospect">Prospects</option>
-          <option value="club">Clubs</option>
-          <option value="client">Clients</option>
-        </select>
-        <select
-          value={filterCategory}
-          onChange={(e) => setFilterCategory(e.target.value)}
-          className="px-4 py-2.5 rounded-lg bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-        >
-          <option value="">All categories</option>
-          {categories.map((cat) => (
-            <option key={cat} value={cat!}>{cat}</option>
-          ))}
-        </select>
+      {/* Filters as visible pills (Rule 17: recognition over recall) */}
+      <input
+        type="text"
+        placeholder="Search name, phone, email..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="w-full px-4 min-h-11 rounded-lg bg-gray-900 border border-gray-700 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500 mb-3"
+      />
+      <div className="flex flex-wrap gap-2 mb-3">
+        {typePills.map((p) => (
+          <button key={p.label} onClick={() => setFilterType(p.value)} className={pill(filterType === p.value)}>
+            {p.label}
+          </button>
+        ))}
       </div>
+      {categories.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-5">
+          <button onClick={() => setFilterCategory('')} className={pill(filterCategory === '')}>
+            All categories
+          </button>
+          {categories.map((cat) => (
+            <button key={cat} onClick={() => setFilterCategory(cat)} className={pill(filterCategory === cat)}>
+              {cat}
+            </button>
+          ))}
+        </div>
+      )}
 
-      {/* Leads table, dense like Close */}
+      {/* Leads table: quiet list styling, hairline dividers, no card box */}
       {loading ? (
         <p className="text-gray-500">Loading...</p>
+      ) : contacts.length === 0 ? (
+        <div className="text-center py-16">
+          <p className="text-base font-medium text-white">No leads yet</p>
+          <p className="text-gray-400 text-sm mt-1">Add your first lead, or import a list from CSV.</p>
+          <div className="flex flex-wrap justify-center gap-3 mt-6">
+            <button
+              onClick={() => setShowAdd(true)}
+              className="inline-flex items-center gap-1.5 px-5 min-h-11 rounded-lg bg-green-500 hover:bg-green-600 text-white font-medium text-sm"
+            >
+              <Plus className="w-4 h-4" /> Add lead
+            </button>
+            <Link
+              href="/contacts/import"
+              className="inline-flex items-center px-5 min-h-11 rounded-lg bg-gray-800 hover:bg-gray-700 text-white font-medium text-sm"
+            >
+              Import from CSV
+            </Link>
+          </div>
+        </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-gray-500">No leads found.</p>
-          <Link href="/contacts/import" className="text-green-400 hover:text-green-300 text-sm mt-2 inline-block">
-            Import from CSV
-          </Link>
+        <div className="text-center py-16">
+          <p className="text-base font-medium text-white">No leads match</p>
+          <p className="text-gray-400 text-sm mt-1">Nothing fits the current search and filters.</p>
+          <button
+            onClick={() => { setSearch(''); setFilterType(''); setFilterCategory('') }}
+            className="inline-flex items-center px-5 min-h-11 mt-6 rounded-lg bg-gray-800 hover:bg-gray-700 text-white font-medium text-sm"
+          >
+            Clear search and filters
+          </button>
         </div>
       ) : (
-        <div className="bg-gray-900 border border-gray-800 rounded-lg overflow-hidden">
+        <div className="border-t border-gray-800">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-800 text-left text-xs uppercase tracking-wider text-gray-500">
-                <th className="font-medium px-4 py-2.5">Lead</th>
-                <th className="font-medium px-4 py-2.5 hidden md:table-cell">Type</th>
-                <th className="font-medium px-4 py-2.5 hidden lg:table-cell">Category</th>
-                <th className="font-medium px-4 py-2.5 hidden sm:table-cell">Phone</th>
-                <th className="font-medium px-4 py-2.5 hidden xl:table-cell">Email</th>
-                <th className="px-2 py-2.5 w-8"></th>
+              <tr className="border-b border-gray-800 text-left font-mono text-[11px] uppercase tracking-[0.14em] text-gray-500">
+                <th className="font-medium px-4 py-3">Lead</th>
+                <th className="font-medium px-4 py-3 hidden md:table-cell">Type</th>
+                <th className="font-medium px-4 py-3 hidden lg:table-cell">Category</th>
+                <th className="font-medium px-4 py-3 hidden sm:table-cell">Phone</th>
+                <th className="font-medium px-4 py-3 hidden xl:table-cell">Email</th>
+                <th className="px-2 py-3 w-8"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800/70">
               {filtered.map((contact) => (
-                <tr key={contact.id} className="hover:bg-gray-800/40 transition-colors">
-                  <td className="px-4 py-2.5">
+                <tr key={contact.id} className="hover:bg-gray-900 transition-colors">
+                  <td className="px-4 py-3.5">
                     <Link href={`/contacts/${contact.id}`} className="flex items-center gap-1.5 min-w-0">
                       <span className="font-medium text-white truncate">
                         {contact.business_name || `${contact.first_name} ${contact.last_name}`}
@@ -132,30 +166,30 @@ export default function ContactsPage() {
                       </div>
                     )}
                   </td>
-                  <td className="px-4 py-2.5 hidden md:table-cell">
+                  <td className="px-4 py-3.5 hidden md:table-cell">
                     {contact.contact_type && (
                       <span className="inline-block px-2 py-0.5 rounded-full bg-gray-800 text-gray-300 text-xs capitalize">
                         {contact.contact_type}
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-2.5 text-gray-400 hidden lg:table-cell">
+                  <td className="px-4 py-3.5 text-gray-400 hidden lg:table-cell">
                     {contact.category || ''}
                   </td>
-                  <td className="px-4 py-2.5 hidden sm:table-cell">
+                  <td className="px-4 py-3.5 hidden sm:table-cell">
                     {contact.phone && (
                       <a
                         href={`tel:${contact.phone}`}
-                        className="inline-flex items-center gap-1.5 text-gray-300 hover:text-green-400"
+                        className="inline-flex items-center gap-1.5 text-gray-300 hover:text-white"
                       >
                         <Phone className="w-3.5 h-3.5" /> {contact.phone}
                       </a>
                     )}
                   </td>
-                  <td className="px-4 py-2.5 text-gray-400 hidden xl:table-cell truncate max-w-55">
+                  <td className="px-4 py-3.5 text-gray-400 hidden xl:table-cell truncate max-w-55">
                     {contact.email || ''}
                   </td>
-                  <td className="px-2 py-2.5">
+                  <td className="px-2 py-3.5">
                     <Link href={`/contacts/${contact.id}`} aria-label="Open lead">
                       <ChevronRight className="w-4 h-4 text-gray-600" />
                     </Link>
@@ -204,20 +238,20 @@ function AddContactModal({ onClose }: { onClose: () => void }) {
             placeholder="Business name"
             value={form.business_name}
             onChange={(e) => setForm({ ...form, business_name: e.target.value })}
-            className="w-full px-3 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
+            className="w-full px-3 py-2.5 min-h-11 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
           />
           <div className="grid grid-cols-2 gap-3">
             <input
               placeholder="First name"
               value={form.first_name}
               onChange={(e) => setForm({ ...form, first_name: e.target.value })}
-              className="w-full px-3 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
+              className="w-full px-3 py-2.5 min-h-11 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
             />
             <input
               placeholder="Last name"
               value={form.last_name}
               onChange={(e) => setForm({ ...form, last_name: e.target.value })}
-              className="w-full px-3 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
+              className="w-full px-3 py-2.5 min-h-11 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
             />
           </div>
           <input
@@ -225,26 +259,26 @@ function AddContactModal({ onClose }: { onClose: () => void }) {
             type="email"
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
-            className="w-full px-3 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
+            className="w-full px-3 py-2.5 min-h-11 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
           />
           <input
             placeholder="Phone"
             type="tel"
             value={form.phone}
             onChange={(e) => setForm({ ...form, phone: e.target.value })}
-            className="w-full px-3 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
+            className="w-full px-3 py-2.5 min-h-11 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
           />
           <div className="grid grid-cols-2 gap-3">
             <input
               placeholder="Category"
               value={form.category}
               onChange={(e) => setForm({ ...form, category: e.target.value })}
-              className="w-full px-3 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
+              className="w-full px-3 py-2.5 min-h-11 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
             />
             <select
               value={form.contact_type}
               onChange={(e) => setForm({ ...form, contact_type: e.target.value })}
-              className="w-full px-3 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
+              className="w-full px-3 py-2.5 min-h-11 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
             >
               <option value="prospect">Prospect</option>
               <option value="club">Club</option>
@@ -256,20 +290,20 @@ function AddContactModal({ onClose }: { onClose: () => void }) {
             value={form.notes}
             onChange={(e) => setForm({ ...form, notes: e.target.value })}
             rows={3}
-            className="w-full px-3 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
+            className="w-full px-3 py-2.5 min-h-11 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
           />
           <div className="flex gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-2.5 rounded-lg bg-gray-800 text-gray-300 font-medium text-sm hover:bg-gray-700"
+              className="flex-1 py-2.5 min-h-11 rounded-lg bg-gray-800 text-gray-300 font-medium text-sm hover:bg-gray-700"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 py-2.5 rounded-lg bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white font-medium text-sm"
+              className="flex-1 py-2.5 min-h-11 rounded-lg bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white font-medium text-sm"
             >
               {saving ? 'Saving...' : 'Add Lead'}
             </button>

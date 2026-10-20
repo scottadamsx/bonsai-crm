@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import AppLayout from '@/components/AppLayout'
 import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 
 export default function ImportPage() {
   const [csv, setCsv] = useState('')
@@ -70,11 +71,11 @@ export default function ImportPage() {
 
   return (
     <AppLayout>
-      <Link href="/contacts" className="text-sm text-gray-400 hover:text-white mb-4 inline-block">
-        ← Back to contacts
+      <Link href="/contacts" className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-white mb-4 min-h-11">
+        <ArrowLeft className="w-4 h-4" /> Back to contacts
       </Link>
 
-      <h1 className="text-2xl font-bold text-white mb-2">Import Contacts</h1>
+      <h1 className="text-[28px] leading-9 font-bold text-white mb-2">Import Contacts</h1>
       <p className="text-gray-400 text-sm mb-6">
         Paste CSV data with headers. Supported columns: business, first_name, last_name, email, phone, address, category, contact_type, website, priority, notes
       </p>
@@ -93,13 +94,13 @@ Joe's Barber Shop,(709) 727-5290,Barbershop,None,YES,No online booking`}
         onChange={(e) => setCsv(e.target.value)}
         placeholder="Paste CSV here..."
         rows={10}
-        className="w-full px-4 py-3 rounded-lg bg-gray-900 border border-gray-700 text-white placeholder-gray-500 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-green-500 mb-4"
+        className="w-full px-4 py-3 rounded-lg bg-gray-900 border border-gray-700 text-white placeholder-gray-500 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-gray-500 mb-4"
       />
 
       <button
         onClick={handleImport}
         disabled={importing}
-        className="px-6 py-3 rounded-lg bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white font-medium"
+        className="px-6 py-3 min-h-11 rounded-lg bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white font-medium"
       >
         {importing ? 'Importing...' : 'Import Contacts'}
       </button>

@@ -63,8 +63,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <nav className="flex flex-col h-full">
       <div className="px-4 h-14 flex items-center border-b border-gray-800">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-md bg-green-500 flex items-center justify-center">
-            <Sprout className="w-4 h-4 text-white" />
+          <div className="w-7 h-7 rounded-md bg-gray-800 flex items-center justify-center">
+            <Sprout className="w-4 h-4 text-green-400" />
           </div>
           <span className="font-display font-bold uppercase text-white text-base tracking-[0.22em]">Bonsai</span>
         </div>
@@ -80,13 +80,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               key={item.href}
               href={item.href}
               onClick={() => setMobileOpen(false)}
-              className={`flex items-center gap-2.5 px-3 py-2 mx-2 rounded-md text-sm transition-colors ${
+              className={`flex items-center gap-2.5 px-3 py-2 min-h-11 mx-2 rounded-md text-sm transition-colors ${
                 active
                   ? 'bg-gray-800 text-white font-medium'
                   : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
               }`}
             >
-              <Icon className="w-4 h-4 shrink-0" />
+              <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-green-400' : ''}`} />
               {item.label}
             </Link>
           )
@@ -94,13 +94,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
         {/* Smart Views, pinned like Close */}
         <div className="mt-4 mb-1 px-5 flex items-center justify-between">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+          <span className="font-mono text-xs font-medium uppercase tracking-[0.14em] text-gray-500">
             Smart Views
           </span>
           <Link
             href="/views"
             onClick={() => setMobileOpen(false)}
-            className="text-[11px] text-gray-500 hover:text-gray-300"
+            className="font-mono text-xs text-gray-500 hover:text-gray-300 min-h-11 inline-flex items-center px-1"
           >
             Manage
           </Link>
@@ -109,7 +109,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <Link
             href="/views"
             onClick={() => setMobileOpen(false)}
-            className="flex items-center gap-2.5 px-3 py-2 mx-2 rounded-md text-sm text-gray-500 hover:text-white hover:bg-gray-800/50"
+            className="flex items-center gap-2.5 px-3 py-2 min-h-11 mx-2 rounded-md text-sm text-gray-500 hover:text-white hover:bg-gray-800/50"
           >
             <Filter className="w-4 h-4 shrink-0" />
             No views yet
@@ -120,7 +120,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               key={view.id}
               href={`/views?run=${view.id}`}
               onClick={() => setMobileOpen(false)}
-              className={`flex items-center gap-2.5 px-3 py-2 mx-2 rounded-md text-sm transition-colors ${
+              className={`flex items-center gap-2.5 px-3 py-2 min-h-11 mx-2 rounded-md text-sm transition-colors ${
                 pathname === '/views'
                   ? 'text-gray-300 hover:text-white hover:bg-gray-800/50'
                   : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
@@ -142,13 +142,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 key={item.href}
                 href={item.href}
                 onClick={() => setMobileOpen(false)}
-                className={`flex items-center gap-2.5 px-3 py-2 mx-2 rounded-md text-sm transition-colors ${
+                className={`flex items-center gap-2.5 px-3 py-2 min-h-11 mx-2 rounded-md text-sm transition-colors ${
                   active
                     ? 'bg-gray-800 text-white font-medium'
                     : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
                 }`}
               >
-                <Icon className="w-4 h-4 shrink-0" />
+                <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-green-400' : ''}`} />
                 {item.label}
               </Link>
             )
@@ -159,7 +159,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="p-3 border-t border-gray-800">
         <button
           onClick={handleSignOut}
-          className="w-full flex items-center gap-2.5 px-2 py-2 text-sm text-gray-400 hover:text-white rounded-md hover:bg-gray-800/50 transition-colors"
+          className="w-full flex items-center gap-2.5 px-2 py-2 min-h-11 text-sm text-gray-400 hover:text-white rounded-md hover:bg-gray-800/50 transition-colors"
         >
           <LogOut className="w-4 h-4" />
           Sign Out
@@ -173,14 +173,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Mobile header */}
       <div className="lg:hidden flex items-center justify-between px-4 h-14 bg-gray-900 border-b border-gray-800 sticky top-0 z-40">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-md bg-green-500 flex items-center justify-center">
-            <Sprout className="w-4 h-4 text-white" />
+          <div className="w-7 h-7 rounded-md bg-gray-800 flex items-center justify-center">
+            <Sprout className="w-4 h-4 text-green-400" />
           </div>
           <span className="font-display font-bold uppercase text-white text-base tracking-[0.22em]">Bonsai</span>
         </div>
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="p-2 rounded-md text-gray-300 hover:bg-gray-800"
+          className="p-2 min-h-11 min-w-11 flex items-center justify-center rounded-md text-gray-300 hover:bg-gray-800"
           aria-label="Toggle menu"
         >
           {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -204,7 +204,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* Main content */}
       <main className="lg:pl-60">
-        <div className="p-4 md:p-6 pb-24 lg:pb-6 max-w-7xl mx-auto">
+        <div className="px-4 py-6 md:px-8 md:py-8 pb-24 lg:pb-8 max-w-[1200px] mx-auto">
           {children}
         </div>
       </main>
@@ -221,7 +221,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 key={tab.href}
                 href={tab.href}
                 className={`flex flex-col items-center justify-center gap-0.5 min-h-14 py-1.5 text-[11px] ${
-                  active ? 'text-white font-semibold' : 'text-gray-500'
+                  active ? 'text-green-400 font-semibold' : 'text-gray-500'
                 }`}
               >
                 <Icon className="w-5 h-5" />

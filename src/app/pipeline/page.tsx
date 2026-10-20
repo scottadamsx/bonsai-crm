@@ -78,9 +78,10 @@ export default function PipelinePage() {
     <AppLayout>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white">Pipeline</h1>
+          <h1 className="text-[28px] leading-9 font-bold text-white">Pipeline</h1>
           <p className="text-gray-400 text-sm mt-1">
-            ${totalValue.toLocaleString()} one-time · ${totalRecurring.toLocaleString()}/mo recurring
+            <span className="font-mono text-white">${totalValue.toLocaleString()}</span> one-time ·{' '}
+            <span className="font-mono text-white">${totalRecurring.toLocaleString()}/mo</span> recurring
           </p>
         </div>
         <div className="flex gap-2">
@@ -88,10 +89,10 @@ export default function PipelinePage() {
             <button
               key={p}
               onClick={() => setPipeline(p)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium capitalize ${
+              className={`px-4 min-h-11 inline-flex items-center rounded-full border text-sm font-medium capitalize ${
                 pipeline === p
-                  ? 'bg-green-500 text-white'
-                  : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                  ? 'bg-gray-100 border-gray-100 text-gray-950'
+                  : 'border-gray-800 text-gray-400 hover:text-white hover:border-gray-700'
               }`}
             >
               {p}
@@ -120,10 +121,10 @@ export default function PipelinePage() {
                       style={{ backgroundColor: stage.color }}
                     />
                     <h3 className="font-semibold text-white text-sm">{stage.name}</h3>
-                    <span className="text-xs text-gray-500">({stageDeals.length})</span>
+                    <span className="font-mono text-xs text-gray-500">{stageDeals.length}</span>
                   </div>
                 </div>
-                <div className="text-xs text-gray-500 mb-3">
+                <div className="font-mono text-xs text-gray-500 mb-3">
                   ${stageValue(stage.id).toLocaleString()}
                 </div>
 
@@ -134,7 +135,7 @@ export default function PipelinePage() {
                       draggable
                       onDragStart={() => setDraggedDeal(deal.id)}
                       onDragEnd={() => setDraggedDeal(null)}
-                      className={`bg-gray-800 rounded-lg p-3 cursor-grab active:cursor-grabbing hover:bg-gray-750 transition-colors ${
+                      className={`bg-gray-800 rounded-lg p-3 cursor-grab active:cursor-grabbing hover:bg-gray-700/60 transition-colors ${
                         draggedDeal === deal.id ? 'opacity-50' : ''
                       }`}
                     >
@@ -145,7 +146,7 @@ export default function PipelinePage() {
                           </span>
                           {deal.contact?.priority && <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400 shrink-0" />}
                         </div>
-                        <div className="text-xs text-gray-400 mt-1">
+                        <div className="font-mono text-xs text-gray-400 mt-1">
                           ${Number(deal.value || 0).toLocaleString()}
                           {Number(deal.recurring_value || 0) > 0 &&
                             ` + $${Number(deal.recurring_value).toLocaleString()}/mo`}
@@ -154,7 +155,7 @@ export default function PipelinePage() {
                       {deal.contact?.phone && (
                         <a
                           href={`tel:${deal.contact.phone}`}
-                          className="text-xs text-green-400 hover:text-green-300 mt-1 inline-block"
+                          className="font-mono text-xs text-gray-400 hover:text-white mt-1.5 inline-block min-h-6"
                         >
                           <span className="inline-flex items-center gap-1"><Phone className="w-3 h-3" /> {deal.contact.phone}</span>
                         </a>
@@ -229,7 +230,7 @@ function AddDealForm({ pipeline, onAdd }: { pipeline: string; onAdd: () => void 
     return (
       <button
         onClick={() => setShow(true)}
-        className="px-4 py-2.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium"
+        className="px-4 py-2.5 min-h-11 rounded-lg bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium"
       >
         + Add contact to pipeline
       </button>
@@ -242,7 +243,7 @@ function AddDealForm({ pipeline, onAdd }: { pipeline: string; onAdd: () => void 
       <select
         value={selected}
         onChange={(e) => setSelected(e.target.value)}
-        className="w-full px-3 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm mb-3"
+        className="w-full px-3 py-2.5 min-h-11 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm mb-3"
       >
         <option value="">Select a contact...</option>
         {contacts.map((c) => (
@@ -254,14 +255,14 @@ function AddDealForm({ pipeline, onAdd }: { pipeline: string; onAdd: () => void 
       <div className="flex gap-2">
         <button
           onClick={() => setShow(false)}
-          className="flex-1 py-2 rounded-lg bg-gray-800 text-gray-300 text-sm hover:bg-gray-700"
+          className="flex-1 py-2 min-h-11 rounded-lg bg-gray-800 text-gray-300 text-sm hover:bg-gray-700"
         >
           Cancel
         </button>
         <button
           onClick={handleAdd}
           disabled={!selected}
-          className="flex-1 py-2 rounded-lg bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white text-sm font-medium"
+          className="flex-1 py-2 min-h-11 rounded-lg bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white text-sm font-medium"
         >
           Add
         </button>

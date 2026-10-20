@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import AppLayout from '@/components/AppLayout'
-import { ClipboardList, Mail, Pencil } from 'lucide-react'
+import { ChevronDown, ChevronUp, ClipboardList, Mail, Pencil, Plus, X } from 'lucide-react'
 
 export default function SettingsPage() {
   const [stages, setStages] = useState<any[]>([])
@@ -63,19 +63,19 @@ export default function SettingsPage() {
 
   return (
     <AppLayout>
-      <h1 className="text-2xl font-bold text-white mb-6">Settings</h1>
+      <h1 className="text-[28px] leading-9 font-bold text-white mb-8">Settings</h1>
 
       {/* Pipeline stages */}
       <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 mb-4">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-white flex items-center gap-2"><ClipboardList className="w-4 h-4 text-green-400" /> Pipeline Stages</h2>
+          <h2 className="font-semibold text-white flex items-center gap-2"><ClipboardList className="w-4 h-4 text-gray-400" /> Pipeline Stages</h2>
           <div className="flex gap-2">
             {['websites', 'clubs'].map((p) => (
               <button
                 key={p}
                 onClick={() => setPipeline(p)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize ${
-                  pipeline === p ? 'bg-green-500 text-white' : 'bg-gray-800 text-gray-300'
+                className={`px-3 min-h-11 inline-flex items-center rounded-lg text-xs font-medium capitalize ${
+                  pipeline === p ? 'bg-gray-100 text-gray-950' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
                 }`}
               >
                 {p}
@@ -89,9 +89,9 @@ export default function SettingsPage() {
             <div key={stage.id} className="flex items-center gap-3 bg-gray-800/50 rounded-lg px-3 py-2.5">
               <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: stage.color }} />
               <span className="flex-1 text-sm text-white font-medium">{stage.name}</span>
-              <button onClick={() => moveStage(stage.id, 'up')} className="text-gray-500 hover:text-white text-sm px-1">↑</button>
-              <button onClick={() => moveStage(stage.id, 'down')} className="text-gray-500 hover:text-white text-sm px-1">↓</button>
-              <button onClick={() => deleteStage(stage.id)} className="text-gray-500 hover:text-red-400 text-sm px-1">×</button>
+              <button onClick={() => moveStage(stage.id, 'up')} className="text-gray-500 hover:text-white p-2.5 min-w-11 flex justify-center" aria-label={`Move ${stage.name} up`}><ChevronUp className="w-4 h-4" /></button>
+              <button onClick={() => moveStage(stage.id, 'down')} className="text-gray-500 hover:text-white p-2.5 min-w-11 flex justify-center" aria-label={`Move ${stage.name} down`}><ChevronDown className="w-4 h-4" /></button>
+              <button onClick={() => deleteStage(stage.id)} className="text-gray-500 hover:text-red-400 p-2.5 min-w-11 flex justify-center" aria-label={`Delete ${stage.name}`}><X className="w-4 h-4" /></button>
             </div>
           ))}
         </div>
@@ -102,11 +102,11 @@ export default function SettingsPage() {
             value={newStageName}
             onChange={(e) => setNewStageName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && addStage()}
-            className="flex-1 px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
+            className="flex-1 px-3 py-2 min-h-11 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
           />
           <button
             onClick={addStage}
-            className="px-4 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white text-sm font-medium"
+            className="px-4 py-2 min-h-11 rounded-lg bg-green-500 hover:bg-green-600 text-white text-sm font-medium"
           >
             Add
           </button>
@@ -116,12 +116,12 @@ export default function SettingsPage() {
       {/* Email templates */}
       <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-white flex items-center gap-2"><Mail className="w-4 h-4 text-green-400" /> Email Templates</h2>
+          <h2 className="font-semibold text-white flex items-center gap-2"><Mail className="w-4 h-4 text-gray-400" /> Email Templates</h2>
           <button
             onClick={() => setEditingTemplate({ name: '', subject: '', body: '' })}
-            className="px-3 py-1.5 rounded-lg bg-green-500 hover:bg-green-600 text-white text-xs font-medium"
+            className="inline-flex items-center gap-1.5 px-3 min-h-11 rounded-lg bg-gray-800 hover:bg-gray-700 text-white text-xs font-medium"
           >
-            + New Template
+            <Plus className="w-3.5 h-3.5" /> New Template
           </button>
         </div>
 
@@ -135,7 +135,8 @@ export default function SettingsPage() {
               <div className="flex gap-1">
                 <button
                   onClick={() => setEditingTemplate(t)}
-                  className="text-gray-500 hover:text-white text-sm px-2"
+                  className="text-gray-500 hover:text-white p-2.5 min-w-11 flex justify-center"
+                  aria-label={`Edit template ${t.name}`}
                 >
                   <Pencil className="w-4 h-4" />
                 </button>
@@ -145,9 +146,10 @@ export default function SettingsPage() {
                     await supabase.from('email_templates').delete().eq('id', t.id)
                     fetchData()
                   }}
-                  className="text-gray-500 hover:text-red-400 text-sm px-2"
+                  className="text-gray-500 hover:text-red-400 p-2.5 min-w-11 flex justify-center"
+                  aria-label={`Delete template ${t.name}`}
                 >
-                  ×
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -183,7 +185,7 @@ function TemplateModal({ template, onClose }: { template: any; onClose: () => vo
     onClose()
   }
 
-  const input = "w-full px-3 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
+  const input = "w-full px-3 py-2.5 min-h-11 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -200,8 +202,8 @@ function TemplateModal({ template, onClose }: { template: any; onClose: () => vo
             Use {'{{business_name}}'}, {'{{first_name}}'} as placeholders.
           </p>
           <div className="flex gap-3">
-            <button onClick={onClose} className="flex-1 py-2.5 rounded-lg bg-gray-800 text-gray-300 text-sm hover:bg-gray-700">Cancel</button>
-            <button onClick={handleSave} disabled={saving || !name} className="flex-1 py-2.5 rounded-lg bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white text-sm font-medium">
+            <button onClick={onClose} className="flex-1 py-2.5 min-h-11 rounded-lg bg-gray-800 text-gray-300 text-sm hover:bg-gray-700">Cancel</button>
+            <button onClick={handleSave} disabled={saving || !name} className="flex-1 py-2.5 min-h-11 rounded-lg bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white text-sm font-medium">
               {saving ? 'Saving...' : 'Save Template'}
             </button>
           </div>

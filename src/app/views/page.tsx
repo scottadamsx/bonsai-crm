@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import AppLayout from '@/components/AppLayout'
 import Link from 'next/link'
-import { Filter, Star } from 'lucide-react'
+import { Filter, Plus, Star, X } from 'lucide-react'
 
 export default function SmartViewsPage() {
   const [views, setViews] = useState<any[]>([])
@@ -67,12 +67,12 @@ export default function SmartViewsPage() {
   return (
     <AppLayout>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-white">Smart Views</h1>
+        <h1 className="text-[28px] leading-9 font-bold text-white">Smart Views</h1>
         <button
           onClick={() => setShowAdd(true)}
-          className="px-4 py-2.5 rounded-lg bg-green-500 hover:bg-green-600 text-white text-sm font-medium"
+          className="inline-flex items-center gap-1.5 px-4 min-h-11 rounded-lg bg-green-500 hover:bg-green-600 text-white text-sm font-medium"
         >
-          + New View
+          <Plus className="w-4 h-4" /> New View
         </button>
       </div>
 
@@ -84,17 +84,18 @@ export default function SmartViewsPage() {
           ) : views.map((view) => (
             <div
               key={view.id}
-              className={`flex items-center justify-between bg-gray-900 border rounded-xl p-3 cursor-pointer ${
-                activeView === view.id ? 'border-green-500' : 'border-gray-800 hover:border-gray-700'
+              className={`flex items-center justify-between border rounded-xl p-3 min-h-11 cursor-pointer ${
+                activeView === view.id ? 'border-gray-500 bg-gray-800/60' : 'bg-gray-900 border-gray-800 hover:border-gray-700'
               }`}
               onClick={() => runView(view)}
             >
-              <span className="font-medium text-white text-sm flex items-center gap-2"><Filter className="w-4 h-4 text-green-400" /> {view.name}</span>
+              <span className="font-medium text-white text-sm flex items-center gap-2"><Filter className="w-4 h-4 text-gray-400" /> {view.name}</span>
               <button
                 onClick={(e) => { e.stopPropagation(); deleteView(view.id) }}
-                className="text-gray-500 hover:text-red-400 text-sm px-2"
+                className="text-gray-500 hover:text-red-400 p-2 -mr-1"
+                aria-label={`Delete view ${view.name}`}
               >
-                ×
+                <X className="w-4 h-4" />
               </button>
             </div>
           ))}
@@ -103,21 +104,18 @@ export default function SmartViewsPage() {
         {/* Results */}
         <div className="md:col-span-2">
           {results === null ? (
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 text-center">
-              <p className="text-gray-500">Select a view to see matching leads.</p>
-            </div>
+            <p className="text-gray-500 text-sm py-8 text-center">Select a view to see matching leads.</p>
           ) : results.length === 0 ? (
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 text-center">
-              <p className="text-gray-500">No leads match this view.</p>
-            </div>
+            <p className="text-gray-500 text-sm py-8 text-center">No leads match this view.</p>
           ) : (
-            <div className="space-y-2">
-              <p className="text-sm text-gray-400">{results.length} leads</p>
+            <div>
+              <p className="font-mono text-xs uppercase tracking-[0.14em] text-gray-500 mb-2">{results.length} leads</p>
+              <div className="divide-y divide-gray-800 border-t border-b border-gray-800">
               {results.map((c) => (
                 <Link
                   key={c.id}
                   href={`/contacts/${c.id}`}
-                  className="block bg-gray-900 border border-gray-800 rounded-xl p-3 hover:border-gray-700"
+                  className="block py-3 px-1 min-h-11 hover:bg-gray-900 transition-colors"
                 >
                   <div className="font-medium text-white text-sm">
                     {c.business_name || `${c.first_name} ${c.last_name}`}
@@ -128,6 +126,7 @@ export default function SmartViewsPage() {
                   </div>
                 </Link>
               ))}
+              </div>
             </div>
           )}
         </div>
@@ -170,12 +169,12 @@ function AddViewModal({ onClose }: { onClose: () => void }) {
             placeholder="View name (e.g., Priority restaurants)"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
+            className="w-full px-3 py-2.5 min-h-11 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
           />
           <select
             value={contactType}
             onChange={(e) => setContactType(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
+            className="w-full px-3 py-2.5 min-h-11 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
           >
             <option value="">All contact types</option>
             <option value="prospect">Prospects</option>
@@ -192,8 +191,8 @@ function AddViewModal({ onClose }: { onClose: () => void }) {
             <Star className="w-4 h-4 text-yellow-400" /> Priority only
           </label>
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-lg bg-gray-800 text-gray-300 text-sm hover:bg-gray-700">Cancel</button>
-            <button type="submit" disabled={saving} className="flex-1 py-2.5 rounded-lg bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white text-sm font-medium">
+            <button type="button" onClick={onClose} className="flex-1 py-2.5 min-h-11 rounded-lg bg-gray-800 text-gray-300 text-sm hover:bg-gray-700">Cancel</button>
+            <button type="submit" disabled={saving} className="flex-1 py-2.5 min-h-11 rounded-lg bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white text-sm font-medium">
               {saving ? 'Saving...' : 'Create View'}
             </button>
           </div>

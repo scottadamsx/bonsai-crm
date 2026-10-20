@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import AppLayout from '@/components/AppLayout'
 import Link from 'next/link'
-import { Phone, AlertTriangle, CalendarDays, Clock } from 'lucide-react'
+import { Phone } from 'lucide-react'
 
 export default function RemindersPage() {
   const [reminders, setReminders] = useState<any[]>([])
@@ -44,7 +44,7 @@ export default function RemindersPage() {
     }`}>
       <div className="min-w-0 flex-1">
         <div className="font-medium text-white text-sm">{r.title}</div>
-        <Link href={`/contacts/${r.contact_id}`} className="text-sm text-gray-400 hover:text-green-400">
+        <Link href={`/contacts/${r.contact_id}`} className="text-sm text-gray-400 hover:text-white">
           {r.contact?.business_name || `${r.contact?.first_name} ${r.contact?.last_name}`}
         </Link>
         <div className={`text-xs mt-0.5 ${isOverdue ? 'text-red-400 font-medium' : 'text-gray-500'}`}>
@@ -55,14 +55,14 @@ export default function RemindersPage() {
         {r.contact?.phone && (
           <a
             href={`tel:${r.contact.phone}`}
-            className="px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-sm"
+            className="px-3 min-h-11 inline-flex items-center rounded-lg bg-gray-800 hover:bg-gray-700 text-sm"
           >
             <Phone className="w-4 h-4 text-gray-300" />
           </a>
         )}
         <button
           onClick={() => complete(r.id)}
-          className="px-3 py-2 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 text-sm font-medium"
+          className="px-4 min-h-11 inline-flex items-center rounded-lg bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium"
         >
           Done
         </button>
@@ -72,19 +72,26 @@ export default function RemindersPage() {
 
   return (
     <AppLayout>
-      <h1 className="text-2xl font-bold text-white mb-6">Inbox</h1>
+      <h1 className="text-[28px] leading-9 font-bold text-white mb-8">Inbox</h1>
 
       {loading ? (
         <p className="text-gray-500">Loading...</p>
       ) : reminders.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-gray-500">No pending follow-ups. You're all caught up.</p>
+        <div className="text-center py-16">
+          <p className="text-base font-medium text-white">All caught up</p>
+          <p className="text-gray-400 text-sm mt-1">No pending follow-ups. Set one from any lead and it lands here.</p>
+          <Link
+            href="/contacts"
+            className="inline-flex items-center px-5 min-h-11 mt-6 rounded-lg bg-gray-800 hover:bg-gray-700 text-white font-medium text-sm"
+          >
+            Browse leads
+          </Link>
         </div>
       ) : (
         <div className="space-y-6">
           {overdue.length > 0 && (
             <div>
-              <h2 className="text-red-400 font-semibold mb-3 flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> Overdue ({overdue.length})</h2>
+              <h2 className="font-mono text-xs font-medium uppercase tracking-[0.14em] text-red-400 mb-3">Overdue · {overdue.length}</h2>
               <div className="space-y-2">
                 {overdue.map((r) => <ReminderCard key={r.id} r={r} isOverdue />)}
               </div>
@@ -93,7 +100,7 @@ export default function RemindersPage() {
 
           {dueToday.length > 0 && (
             <div>
-              <h2 className="text-yellow-400 font-semibold mb-3 flex items-center gap-2"><CalendarDays className="w-4 h-4" /> Due Today ({dueToday.length})</h2>
+              <h2 className="font-mono text-xs font-medium uppercase tracking-[0.14em] text-gray-300 mb-3">Due Today · {dueToday.length}</h2>
               <div className="space-y-2">
                 {dueToday.map((r) => <ReminderCard key={r.id} r={r} />)}
               </div>
@@ -102,7 +109,7 @@ export default function RemindersPage() {
 
           {upcoming.length > 0 && (
             <div>
-              <h2 className="text-gray-300 font-semibold mb-3 flex items-center gap-2"><Clock className="w-4 h-4" /> Upcoming ({upcoming.length})</h2>
+              <h2 className="font-mono text-xs font-medium uppercase tracking-[0.14em] text-gray-400 mb-3">Upcoming · {upcoming.length}</h2>
               <div className="space-y-2">
                 {upcoming.map((r) => <ReminderCard key={r.id} r={r} />)}
               </div>

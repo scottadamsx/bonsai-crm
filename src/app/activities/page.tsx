@@ -28,37 +28,57 @@ export default function ActivitiesPage() {
 
   const filtered = filter ? activities.filter(a => a.type === filter) : activities
 
+  const pill = (active: boolean) =>
+    `min-h-11 px-4 rounded-full border text-sm transition-colors ${
+      active
+        ? 'bg-gray-100 border-gray-100 text-gray-950 font-medium'
+        : 'border-gray-800 text-gray-400 hover:text-white hover:border-gray-700'
+    }`
+
+  const typePills = [
+    { value: '', label: 'All types' },
+    { value: 'call', label: 'Calls' },
+    { value: 'email', label: 'Emails' },
+    { value: 'sms', label: 'SMS' },
+    { value: 'meeting', label: 'Meetings' },
+    { value: 'note', label: 'Notes' },
+  ]
+
   return (
     <AppLayout>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-white">Activities</h1>
-        <select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="px-4 py-2.5 rounded-lg bg-gray-900 border border-gray-700 text-white text-sm"
-        >
-          <option value="">All types</option>
-          <option value="call">Calls</option>
-          <option value="email">Emails</option>
-          <option value="sms">SMS</option>
-          <option value="meeting">Meetings</option>
-          <option value="note">Notes</option>
-        </select>
+      <h1 className="text-[28px] leading-9 font-bold text-white mb-6">Activities</h1>
+
+      {/* Type filters as visible pills (Rule 17: recognition over recall) */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        {typePills.map((p) => (
+          <button key={p.label} onClick={() => setFilter(p.value)} className={pill(filter === p.value)}>
+            {p.label}
+          </button>
+        ))}
       </div>
 
       {loading ? (
         <p className="text-gray-500">Loading...</p>
       ) : filtered.length === 0 ? (
-        <p className="text-gray-500">No activities yet.</p>
+        <div className="text-center py-16">
+          <p className="text-base font-medium text-white">No activities yet</p>
+          <p className="text-gray-400 text-sm mt-1">Log a call, email, or note on a lead and it shows up here.</p>
+          <Link
+            href="/contacts"
+            className="inline-flex items-center px-5 min-h-11 mt-6 rounded-lg bg-gray-800 hover:bg-gray-700 text-white font-medium text-sm"
+          >
+            Log an activity
+          </Link>
+        </div>
       ) : (
-        <div className="space-y-2">
+        <div className="divide-y divide-gray-800 border-t border-b border-gray-800">
           {filtered.map((a) => (
             <Link
               key={a.id}
               href={`/contacts/${a.contact_id}`}
-              className="flex gap-3 bg-gray-900 border border-gray-800 rounded-xl p-4 hover:border-gray-700"
+              className="flex gap-3 py-4 px-1 hover:bg-gray-900 transition-colors"
             >
-              <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center shrink-0 text-green-400">
+              <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center shrink-0 text-gray-400">
                 <ActivityIcon type={a.type} className="w-5 h-5" />
               </div>
               <div className="flex-1 min-w-0">
@@ -75,7 +95,7 @@ export default function ActivitiesPage() {
                 </div>
                 {a.subject && <div className="text-sm text-gray-400">{a.subject}</div>}
                 {a.body && <div className="text-sm text-gray-500 truncate">{a.body}</div>}
-                <div className="text-xs text-gray-600 mt-1">
+                <div className="font-mono text-[11px] text-gray-500 mt-1">
                   {new Date(a.created_at).toLocaleString()}
                 </div>
               </div>

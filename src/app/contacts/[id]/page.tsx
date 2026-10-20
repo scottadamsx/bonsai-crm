@@ -72,7 +72,7 @@ export default function ContactDetailPage() {
 
   return (
     <AppLayout>
-      <Link href="/contacts" className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-white mb-4">
+      <Link href="/contacts" className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-white mb-4 min-h-11">
         <ArrowLeft className="w-4 h-4" /> Back to leads
       </Link>
 
@@ -95,14 +95,14 @@ export default function ContactDetailPage() {
               <div className="flex gap-1 shrink-0">
                 <button
                   onClick={() => setEditing(!editing)}
-                  className="p-2 rounded-md bg-gray-800 hover:bg-gray-700 text-gray-300"
+                  className="p-2.5 min-h-11 min-w-11 flex items-center justify-center rounded-md bg-gray-800 hover:bg-gray-700 text-gray-300"
                   aria-label="Edit lead"
                 >
                   <Pencil className="w-4 h-4" />
                 </button>
                 <button
                   onClick={handleDelete}
-                  className="p-2 rounded-md bg-gray-800 hover:bg-red-900 text-gray-300"
+                  className="p-2.5 min-h-11 min-w-11 flex items-center justify-center rounded-md bg-gray-800 hover:bg-red-900 text-gray-300"
                   aria-label="Delete lead"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -127,7 +127,7 @@ export default function ContactDetailPage() {
               {contact.phone && (
                 <div className="flex items-center gap-2.5">
                   <Phone className="w-4 h-4 text-gray-500 shrink-0" />
-                  <a href={`tel:${contact.phone}`} className="text-gray-200 hover:text-green-400">
+                  <a href={`tel:${contact.phone}`} className="font-mono text-gray-200 hover:text-white">
                     {contact.phone}
                   </a>
                 </div>
@@ -135,7 +135,7 @@ export default function ContactDetailPage() {
               {contact.email && (
                 <div className="flex items-center gap-2.5 min-w-0">
                   <Mail className="w-4 h-4 text-gray-500 shrink-0" />
-                  <a href={`mailto:${contact.email}`} className="text-gray-200 hover:text-green-400 truncate">
+                  <a href={`mailto:${contact.email}`} className="text-gray-200 hover:text-white truncate">
                     {contact.email}
                   </a>
                 </div>
@@ -167,11 +167,11 @@ export default function ContactDetailPage() {
           <div className="bg-gray-900 border border-gray-800 rounded-lg p-4">
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-                <Clock className="w-4 h-4 text-green-400" /> Follow-ups
+                <Clock className="w-4 h-4 text-gray-400" /> Follow-ups
               </h2>
               <button
                 onClick={() => setShowReminder(true)}
-                className="inline-flex items-center gap-1 text-xs text-green-400 hover:text-green-300"
+                className="inline-flex items-center gap-1 text-xs text-gray-300 hover:text-white min-h-11 px-2"
               >
                 <Plus className="w-3.5 h-3.5" /> Add
               </button>
@@ -184,14 +184,14 @@ export default function ContactDetailPage() {
                   <div key={r.id} className="flex items-center justify-between gap-2 px-3 py-2 rounded-md bg-gray-800/50">
                     <div className="min-w-0">
                       <div className="text-sm text-white truncate">{r.title}</div>
-                      <div className="text-xs text-gray-400">Due {r.due_date}</div>
+                      <div className="font-mono text-[11px] text-gray-500">Due {r.due_date}</div>
                     </div>
                     <button
                       onClick={async () => {
                         await supabase.from('reminders').update({ completed: true, completed_at: new Date().toISOString() }).eq('id', r.id)
                         fetchData()
                       }}
-                      className="inline-flex items-center gap-1 text-green-400 hover:text-green-300 text-sm shrink-0"
+                      className="inline-flex items-center gap-1 text-gray-200 hover:text-white text-sm shrink-0 min-h-11 px-2"
                     >
                       <Check className="w-4 h-4" /> Done
                     </button>
@@ -235,7 +235,7 @@ export default function ContactDetailPage() {
               <div className="space-y-4">
                 {activities.map((a) => (
                   <div key={a.id} className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center shrink-0 text-green-400">
+                    <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center shrink-0 text-gray-400">
                       <ActivityIcon type={a.type} className="w-4 h-4" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -246,7 +246,7 @@ export default function ContactDetailPage() {
                             {a.outcome.replace('_', ' ')}
                           </span>
                         )}
-                        <span className="text-xs text-gray-500">
+                        <span className="font-mono text-[11px] text-gray-500">
                           {new Date(a.created_at).toLocaleString()}
                         </span>
                       </div>
@@ -302,7 +302,7 @@ function EditForm({ contact, onSave }: { contact: Contact; onSave: () => void })
     onSave()
   }
 
-  const input = "w-full px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
+  const input = "w-full px-3 py-2 min-h-11 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
 
   return (
     <form onSubmit={handleSubmit} className="mt-4 pt-4 border-t border-gray-800 space-y-3">
@@ -328,7 +328,7 @@ function EditForm({ contact, onSave }: { contact: Contact; onSave: () => void })
           <Star className="w-4 h-4 text-yellow-400" /> Priority
         </label>
       </div>
-      <button type="submit" disabled={saving} className="px-4 py-2 rounded-lg bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white text-sm font-medium">
+      <button type="submit" disabled={saving} className="px-4 py-2 min-h-11 rounded-lg bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white text-sm font-medium">
         {saving ? 'Saving...' : 'Save Changes'}
       </button>
     </form>
@@ -358,7 +358,7 @@ function ActivityModal({ contactId, onClose }: { contactId: string; onClose: () 
     onClose()
   }
 
-  const input = "w-full px-3 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
+  const input = "w-full px-3 py-2.5 min-h-11 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -385,8 +385,8 @@ function ActivityModal({ contactId, onClose }: { contactId: string; onClose: () 
           <input className={input} placeholder="Subject (optional)" value={subject} onChange={(e) => setSubject(e.target.value)} />
           <textarea className={input} placeholder="Notes..." rows={4} value={body} onChange={(e) => setBody(e.target.value)} />
           <div className="flex gap-3">
-            <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-lg bg-gray-800 text-gray-300 text-sm hover:bg-gray-700">Cancel</button>
-            <button type="submit" disabled={saving} className="flex-1 py-2.5 rounded-lg bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white text-sm font-medium">
+            <button type="button" onClick={onClose} className="flex-1 py-2.5 min-h-11 rounded-lg bg-gray-800 text-gray-300 text-sm hover:bg-gray-700">Cancel</button>
+            <button type="submit" disabled={saving} className="flex-1 py-2.5 min-h-11 rounded-lg bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white text-sm font-medium">
               {saving ? 'Saving...' : 'Log Activity'}
             </button>
           </div>
@@ -421,18 +421,18 @@ function ReminderModal({ contactId, onClose }: { contactId: string; onClose: () 
             placeholder="What to do? (e.g., Follow up on mockup)"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
+            className="w-full px-3 py-2.5 min-h-11 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
           />
           <input
             type="date"
             required
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
+            className="w-full px-3 py-2.5 min-h-11 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
           />
           <div className="flex gap-3">
-            <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-lg bg-gray-800 text-gray-300 text-sm hover:bg-gray-700">Cancel</button>
-            <button type="submit" disabled={saving} className="flex-1 py-2.5 rounded-lg bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white text-sm font-medium">
+            <button type="button" onClick={onClose} className="flex-1 py-2.5 min-h-11 rounded-lg bg-gray-800 text-gray-300 text-sm hover:bg-gray-700">Cancel</button>
+            <button type="submit" disabled={saving} className="flex-1 py-2.5 min-h-11 rounded-lg bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white text-sm font-medium">
               {saving ? 'Saving...' : 'Set Follow-up'}
             </button>
           </div>
