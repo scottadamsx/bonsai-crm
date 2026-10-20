@@ -66,7 +66,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="w-7 h-7 rounded-md bg-green-500 flex items-center justify-center">
             <Sprout className="w-4 h-4 text-white" />
           </div>
-          <span className="font-semibold text-white text-sm tracking-wide">BONSAI</span>
+          <span className="font-display font-bold uppercase text-white text-base tracking-[0.22em]">Bonsai</span>
         </div>
       </div>
 
@@ -176,7 +176,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="w-7 h-7 rounded-md bg-green-500 flex items-center justify-center">
             <Sprout className="w-4 h-4 text-white" />
           </div>
-          <span className="font-semibold text-white text-sm tracking-wide">BONSAI</span>
+          <span className="font-display font-bold uppercase text-white text-base tracking-[0.22em]">Bonsai</span>
         </div>
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
@@ -221,7 +221,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 key={tab.href}
                 href={tab.href}
                 className={`flex flex-col items-center justify-center gap-0.5 min-h-14 py-1.5 text-[11px] ${
-                  active ? 'text-green-400' : 'text-gray-400'
+                  active ? 'text-white font-semibold' : 'text-gray-500'
                 }`}
               >
                 <Icon className="w-5 h-5" />

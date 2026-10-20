@@ -85,7 +85,7 @@ export default async function DashboardPage() {
                 <StatIcon className="w-4 h-4 text-green-400" />
                 <span className="text-xs text-gray-400 font-medium">{stat.label}</span>
               </div>
-              <div className="text-2xl font-bold text-white">{stat.value}</div>
+              <div className="text-2xl font-medium font-mono text-white">{stat.value}</div>
             </Link>
           )
         })}
