@@ -4,14 +4,16 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import AppLayout from '@/components/AppLayout'
-import { ChevronDown, ChevronUp, ClipboardList, Mail, Pencil, Plus, X } from 'lucide-react'
+import { ChevronDown, ChevronUp, ClipboardList, ListPlus, Mail, Pencil, Plus, X } from 'lucide-react'
 
 export default function SettingsPage() {
   const [stages, setStages] = useState<any[]>([])
   const [templates, setTemplates] = useState<any[]>([])
+  const [fieldDefs, setFieldDefs] = useState<any[]>([])
   const [pipeline, setPipeline] = useState('websites')
   const [newStageName, setNewStageName] = useState('')
   const [editingTemplate, setEditingTemplate] = useState<any>(null)
+  const [newField, setNewField] = useState({ name: '', field_type: 'text', options: '' })
   const supabase = createClient()
 
   useEffect(() => { fetchData() }, [pipeline])
@@ -26,6 +28,28 @@ export default function SettingsPage() {
 
     const { data: t } = await supabase.from('email_templates').select('*').order('name')
     setTemplates(t || [])
+
+    const { data: f } = await supabase.from('custom_field_defs').select('*').order('name')
+    setFieldDefs(f || [])
+  }
+
+  const addField = async () => {
+    if (!newField.name.trim()) return
+    await supabase.from('custom_field_defs').insert([{
+      name: newField.name.trim(),
+      field_type: newField.field_type,
+      options: newField.field_type === 'select'
+        ? newField.options.split(',').map(o => o.trim()).filter(Boolean)
+        : null,
+    }])
+    setNewField({ name: '', field_type: 'text', options: '' })
+    fetchData()
+  }
+
+  const deleteField = async (def: any) => {
+    if (!confirm(`Delete the "${def.name}" field definition? Values already saved on leads are kept.`)) return
+    await supabase.from('custom_field_defs').delete().eq('id', def.id)
+    fetchData()
   }
 
   const addStage = async () => {
@@ -154,6 +178,72 @@ export default function SettingsPage() {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Custom fields */}
+      <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 mt-4">
+        <h2 className="font-semibold text-white flex items-center gap-2 mb-1"><ListPlus className="w-4 h-4 text-gray-400" /> Custom Fields</h2>
+        <p className="text-xs text-gray-500 mb-4">
+          Extra fields on every lead, edited from the lead page and filterable in Smart Views.
+          Add one only when a real field is needed twice.
+        </p>
+
+        <div className="space-y-2 mb-4">
+          {fieldDefs.length === 0 ? (
+            <p className="text-sm text-gray-500">No custom fields defined yet.</p>
+          ) : fieldDefs.map((def) => (
+            <div key={def.id} className="flex items-center justify-between bg-gray-800/50 rounded-lg px-3 py-2.5">
+              <div>
+                <span className="text-sm text-white font-medium">{def.name}</span>
+                <span className="font-mono text-xs text-gray-500 ml-2 capitalize">{def.field_type}</span>
+                {def.field_type === 'select' && def.options?.length > 0 && (
+                  <span className="text-xs text-gray-500 ml-2">{def.options.join(', ')}</span>
+                )}
+              </div>
+              <button
+                onClick={() => deleteField(def)}
+                className="text-gray-500 hover:text-red-400 p-2.5 min-w-11 flex justify-center"
+                aria-label={`Delete field ${def.name}`}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <input
+            placeholder="Field name (e.g., Parking spots)"
+            value={newField.name}
+            onChange={(e) => setNewField({ ...newField, name: e.target.value })}
+            className="flex-1 min-w-44 px-3 py-2 min-h-11 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
+          />
+          <select
+            value={newField.field_type}
+            onChange={(e) => setNewField({ ...newField, field_type: e.target.value })}
+            className="px-3 py-2 min-h-11 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
+            aria-label="Field type"
+          >
+            <option value="text">Text</option>
+            <option value="number">Number</option>
+            <option value="date">Date</option>
+            <option value="select">Select</option>
+          </select>
+          {newField.field_type === 'select' && (
+            <input
+              placeholder="Options, comma separated"
+              value={newField.options}
+              onChange={(e) => setNewField({ ...newField, options: e.target.value })}
+              className="flex-1 min-w-44 px-3 py-2 min-h-11 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
+            />
+          )}
+          <button
+            onClick={addField}
+            className="px-4 py-2 min-h-11 rounded-lg bg-green-500 hover:bg-green-600 text-white text-sm font-medium"
+          >
+            Add Field
+          </button>
         </div>
       </div>
 

@@ -463,13 +463,21 @@ function EditForm({ contact, onSave }: { contact: Contact; onSave: () => void })
     notes: contact.notes || '',
     priority: contact.priority,
   })
+  const [fieldDefs, setFieldDefs] = useState<any[]>([])
+  const [cfValues, setCfValues] = useState<Record<string, unknown>>(contact.custom_fields || {})
   const [saving, setSaving] = useState(false)
   const supabase = createClient()
+
+  useEffect(() => {
+    supabase.from('custom_field_defs').select('*').order('name')
+      .then(({ data }) => setFieldDefs(data || []))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
-    await supabase.from('contacts').update(form).eq('id', contact.id)
+    await supabase.from('contacts').update({ ...form, custom_fields: cfValues }).eq('id', contact.id)
     setSaving(false)
     onSave()
   }
@@ -489,6 +497,41 @@ function EditForm({ contact, onSave }: { contact: Contact; onSave: () => void })
         <input className={input} placeholder="Website status" value={form.website_status} onChange={(e) => setForm({ ...form, website_status: e.target.value })} />
       </div>
       <textarea className={input} placeholder="Notes" rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+      {fieldDefs.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {fieldDefs.map((def) => {
+            const value = cfValues[def.name]
+            const set = (v: unknown) => setCfValues(prev => ({ ...prev, [def.name]: v }))
+            if (def.field_type === 'select') {
+              return (
+                <select
+                  key={def.id}
+                  value={value == null ? '' : String(value)}
+                  onChange={(e) => set(e.target.value)}
+                  className={input}
+                  aria-label={def.name}
+                >
+                  <option value="">{def.name}: not set</option>
+                  {(def.options || []).map((o: string) => (
+                    <option key={o} value={o}>{o}</option>
+                  ))}
+                </select>
+              )
+            }
+            return (
+              <input
+                key={def.id}
+                type={def.field_type === 'number' ? 'number' : def.field_type === 'date' ? 'date' : 'text'}
+                placeholder={def.name}
+                value={value == null ? '' : String(value)}
+                onChange={(e) => set(def.field_type === 'number' && e.target.value !== '' ? Number(e.target.value) : e.target.value)}
+                className={input}
+                aria-label={def.name}
+              />
+            )
+          })}
+        </div>
+      )}
       <div className="flex items-center gap-4">
         <select value={form.contact_type} onChange={(e) => setForm({ ...form, contact_type: e.target.value as any })} className={input + ' w-auto'}>
           <option value="prospect">Prospect</option>
