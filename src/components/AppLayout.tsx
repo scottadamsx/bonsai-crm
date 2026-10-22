@@ -42,16 +42,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const supabase = createClient()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [views, setViews] = useState<{ id: string; name: string }[]>([])
+  const [views, setViews] = useState<{ id: string; name: string; filters?: { pinned?: boolean } }[]>([])
 
   useEffect(() => {
     supabase
       .from('smart_views')
-      .select('id, name')
+      .select('id, name, filters')
       .order('name')
       .then(({ data }) => setViews(data || []))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Pinned views get the sidebar (Close-style); until something is pinned,
+  // every view shows, as before.
+  const pinnedViews = views.filter((v) => v.filters?.pinned)
+  const sidebarViews = pinnedViews.length > 0 ? pinnedViews : views
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -105,7 +110,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             Manage
           </Link>
         </div>
-        {views.length === 0 ? (
+        {sidebarViews.length === 0 ? (
           <Link
             href="/views"
             onClick={() => setMobileOpen(false)}
@@ -115,7 +120,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             No views yet
           </Link>
         ) : (
-          views.map((view) => (
+          sidebarViews.map((view) => (
             <Link
               key={view.id}
               href={`/views?run=${view.id}`}
