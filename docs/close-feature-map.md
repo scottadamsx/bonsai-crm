@@ -324,3 +324,25 @@ BONSAI state checked against ~/workspace/bonsai-crm/src on 2026-10-20 (dashboard
 4. Reshape the contact page into Close's lead page: details rail on the left, one activity feed in the center, composer on top of the feed (section 3).
 5. Apply the mobile rules in section 4 verbatim as acceptance criteria for every screen at phone width.
 6. Do not build: dialer, SMS sending, workflows, roles, AI, bulk tools. The research already decided this; the gap table records it so it is not re-litigated.
+
+## 7. Gap list build, 2026-10-22
+
+Scott's blanket "go on all items" (2026-10-22) covered gap items 1 to 10. Built and pushed:
+
+1. **Lead status** (Spotted / Contacted / Working / Client / Dead): chip and filter pills on Leads, status control on the lead page, filter in Smart Views. Constant in `src/lib/leadStatus.ts`.
+2. **Inbox**: tabs (All / Due / Latest activity / Done) merging due follow-ups with the latest activity per lead, plus completed follow-ups.
+3. **Smart Views**: live activity filters (no activity in X days, no follow-up scheduled), lead status filter, custom field filter, sidebar pinning (pinned views take over the sidebar; nothing pinned means all views show, as before).
+4. **Lead page**: inline composer on top of the feed (was a modal), deals block in the rail with a one-picker stage change, snoozed state on follow-ups.
+5. **Mobile rules**: pipeline is a vertical stage-grouped list on phones, lead rows carry name, status, latest activity; the lead page is two tabs (Details / Activity) on phones. The rest of the rules were already met by the 2026-10-20 design pass.
+8. **Reminder snooze**: Tomorrow / In 3 days / Next week / Unsnooze on each Inbox follow-up, stored on `reminders.snoozed_until`; the dashboard due list respects it.
+9. **Opportunity won date**: moving a deal into Client or Care Plan stamps `deals.won_date`, moving it out clears it; shown on pipeline cards, the mobile pipeline list, and the lead page.
+10. **Custom Fields**: definition UI in Settings (text / number / date / select with options), values edited in the lead edit form into `contacts.custom_fields`, filterable in Smart Views.
+
+**One manual step:** `supabase/migrations/002_gap_list.sql` must be run once in the Supabase SQL editor (project bonsai-crm). It adds `contacts.lead_status`, `reminders.snoozed_until`, and `deals.won_date`. The app is written to keep working before it is applied (reads use `select('*')`, writes to the new columns fail soft), but status changes, snoozes, and won dates only save after it runs.
+
+**Skipped, with reasons:**
+
+- Item 6, email sequences that actually send: the spec sends via the Gmail API using Scott's connected account, but the CRM has no Google OAuth client of its own (no client id/secret anywhere in the repo or its Vercel env) and no token store. Needs a Google Cloud OAuth client created for BONSAI plus a token storage decision before it can be built as specced.
+- Item 7, SMS via Twilio: needs a Twilio account (paid) and credentials that do not exist yet.
+- Items 11 to 14 (myBackyard integration, care plan automation, reporting v2, n8n webhook): Phase 3 in research.md, gated on revenue flowing; the 2026-10-22 go covered items 1 to 10.
+- Item 15, the seed script: writes production data; still needs Scott's explicit word. The CRM still holds zero leads, so every screen above is verified against empty states until it runs.
