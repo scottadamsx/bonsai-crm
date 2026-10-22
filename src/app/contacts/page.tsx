@@ -11,6 +11,7 @@ import { LEAD_STATUSES, leadStatusOf, leadStatusColor } from '@/lib/leadStatus'
 
 export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([])
+  const [lastActivity, setLastActivity] = useState<Map<string, string>>(new Map())
   const [search, setSearch] = useState('')
   const [filterType, setFilterType] = useState('')
   const [filterCategory, setFilterCategory] = useState('')
@@ -30,6 +31,16 @@ export default function ContactsPage() {
       .select('*')
       .order('business_name', { ascending: true })
     setContacts(data || [])
+    // Latest activity per lead, for the phone row (mobile spec rule 5)
+    const { data: acts } = await supabase
+      .from('activities')
+      .select('contact_id, created_at')
+      .order('created_at', { ascending: false })
+    const latest = new Map<string, string>()
+    for (const a of acts || []) {
+      if (!latest.has(a.contact_id)) latest.set(a.contact_id, a.created_at)
+    }
+    setLastActivity(latest)
     setLoading(false)
   }
 
@@ -180,6 +191,19 @@ export default function ContactsPage() {
                         {contact.first_name} {contact.last_name}
                       </div>
                     )}
+                    {/* Phone rows carry status + latest activity (rule 5);
+                        wider screens get them as table columns. */}
+                    <div className="md:hidden mt-1 flex items-center gap-2 text-xs text-gray-500">
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-gray-800 text-gray-300">
+                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: leadStatusColor(leadStatusOf(contact)) }} />
+                        {leadStatusOf(contact)}
+                      </span>
+                      <span className="font-mono">
+                        {lastActivity.has(contact.id)
+                          ? `Last activity ${lastActivity.get(contact.id)!.split('T')[0]}`
+                          : 'No activity yet'}
+                      </span>
+                    </div>
                   </td>
                   <td className="px-4 py-3.5 hidden md:table-cell">
                     <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-gray-800 text-gray-300 text-xs">

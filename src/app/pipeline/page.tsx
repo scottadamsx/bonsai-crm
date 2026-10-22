@@ -107,7 +107,47 @@ export default function PipelinePage() {
       {loading ? (
         <p className="text-gray-500">Loading...</p>
       ) : (
-        <div className="flex gap-3 overflow-x-auto pb-4 -mx-4 px-4 md:mx-0 md:px-0">
+        <>
+        {/* Phones: a vertical list grouped by stage, no horizontal kanban
+            (mobile spec rule 7). Stage changes happen on the lead page. */}
+        <div className="lg:hidden space-y-6">
+          {stages.map((stage) => {
+            const stageDeals = deals.filter(d => d.stage_id === stage.id)
+            if (stageDeals.length === 0) return null
+            return (
+              <div key={stage.id}>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: stage.color }} />
+                  <h3 className="font-semibold text-white text-sm">{stage.name}</h3>
+                  <span className="font-mono text-xs text-gray-500">{stageDeals.length}</span>
+                  <span className="font-mono text-xs text-gray-500 ml-auto">
+                    ${stageValue(stage.id).toLocaleString()}
+                  </span>
+                </div>
+                <div className="divide-y divide-gray-800 border-t border-b border-gray-800">
+                  {stageDeals.map((deal: any) => (
+                    <Link key={deal.id} href={`/contacts/${deal.contact_id}`} className="block py-3 min-h-11">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-medium text-white text-sm truncate">
+                          {deal.contact?.business_name || 'Unknown'}
+                        </span>
+                        {deal.contact?.priority && <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400 shrink-0" />}
+                      </div>
+                      <div className="font-mono text-xs text-gray-400 mt-0.5">
+                        ${Number(deal.value || 0).toLocaleString()}
+                        {Number(deal.recurring_value || 0) > 0 &&
+                          ` + $${Number(deal.recurring_value).toLocaleString()}/mo`}
+                        {deal.won_date && ` · Won ${deal.won_date}`}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        <div className="hidden lg:flex gap-3 overflow-x-auto pb-4">
           {stages.map((stage) => {
             const stageDeals = deals.filter(d => d.stage_id === stage.id)
             return (
@@ -173,6 +213,7 @@ export default function PipelinePage() {
             );
           })}
         </div>
+        </>
       )}
 
       <div className="mt-6">
