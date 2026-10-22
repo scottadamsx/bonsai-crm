@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import type { Contact, Activity, Reminder } from '@/lib/types'
 import { LEAD_STATUSES, leadStatusOf, leadStatusColor } from '@/lib/leadStatus'
+import { moveDealToStage } from '@/lib/deals'
 
 export default function ContactDetailPage() {
   const params = useParams()
@@ -30,11 +31,19 @@ export default function ContactDetailPage() {
   const [contact, setContact] = useState<Contact | null>(null)
   const [activities, setActivities] = useState<Activity[]>([])
   const [reminders, setReminders] = useState<Reminder[]>([])
+  const [deals, setDeals] = useState<any[]>([])
+  const [allStages, setAllStages] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [showActivity, setShowActivity] = useState(false)
   const [showReminder, setShowReminder] = useState(false)
   const [editing, setEditing] = useState(false)
   const [statusError, setStatusError] = useState('')
+  const [mobileTab, setMobileTab] = useState<'details' | 'activity'>('details')
+  // Inline composer state (sits on top of the activity feed, like Close)
+  const [cType, setCType] = useState('call')
+  const [cSubject, setCSubject] = useState('')
+  const [cBody, setCBody] = useState('')
+  const [cOutcome, setCOutcome] = useState('')
+  const [cSaving, setCSaving] = useState(false)
   const supabase = createClient()
 
   const changeStatus = async (value: string) => {
@@ -67,7 +76,39 @@ export default function ContactDetailPage() {
       .eq('contact_id', id)
       .order('due_date', { ascending: true })
     setReminders(r || [])
+    const { data: d } = await supabase
+      .from('deals')
+      .select('*, stage:pipeline_stages(name)')
+      .eq('contact_id', id)
+      .order('created_at', { ascending: true })
+    setDeals(d || [])
+    const { data: st } = await supabase.from('pipeline_stages').select('*').order('position')
+    setAllStages(st || [])
     setLoading(false)
+  }
+
+  const submitComposer = async () => {
+    setCSaving(true)
+    await supabase.from('activities').insert([{
+      contact_id: id,
+      type: cType,
+      subject: cSubject || null,
+      body: cBody || null,
+      outcome: cType === 'call' ? (cOutcome || null) : null,
+      direction: 'outbound',
+    }])
+    setCSaving(false)
+    setCSubject('')
+    setCBody('')
+    setCOutcome('')
+    fetchData()
+  }
+
+  const changeDealStage = async (deal: any, stageId: string) => {
+    const stage = allStages.find(s => s.id === stageId)
+    if (!stage) return
+    await moveDealToStage(supabase, deal.id, stageId, stage.name, deal.won_date)
+    fetchData()
   }
 
   const handleDelete = async () => {
@@ -89,9 +130,29 @@ export default function ContactDetailPage() {
         <ArrowLeft className="w-4 h-4" /> Back to leads
       </Link>
 
+      {/* Mobile: two tabs only, Details and Activity (mobile spec rule 3) */}
+      <div className="flex gap-2 mb-4 lg:hidden">
+        {([
+          { value: 'details', label: 'Details' },
+          { value: 'activity', label: 'Activity' },
+        ] as const).map((t) => (
+          <button
+            key={t.value}
+            onClick={() => setMobileTab(t.value)}
+            className={`flex-1 min-h-11 px-4 rounded-full border text-sm transition-colors ${
+              mobileTab === t.value
+                ? 'bg-gray-100 border-gray-100 text-gray-950 font-medium'
+                : 'border-gray-800 text-gray-400'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
       <div className="grid lg:grid-cols-[320px_1fr] gap-4 items-start">
         {/* Left rail: lead details, like Close */}
-        <div className="space-y-4">
+        <div className={`space-y-4 ${mobileTab === 'activity' ? 'hidden lg:block' : ''}`}>
           <div className="bg-gray-900 border border-gray-800 rounded-lg p-4">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
@@ -197,6 +258,41 @@ export default function ContactDetailPage() {
             {editing && <EditForm contact={contact} onSave={() => { setEditing(false); fetchData() }} />}
           </div>
 
+          {/* Deals for this lead, with a one-picker stage change */}
+          {deals.length > 0 && (
+            <div className="bg-gray-900 border border-gray-800 rounded-lg p-4">
+              <h2 className="text-sm font-semibold text-white mb-2">Deals</h2>
+              <div className="space-y-3">
+                {deals.map((deal) => (
+                  <div key={deal.id} className="px-3 py-2.5 rounded-md bg-gray-800/50">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm text-white capitalize">{deal.pipeline}</span>
+                      <span className="font-mono text-xs text-gray-400">
+                        ${Number(deal.value || 0).toLocaleString()}
+                        {Number(deal.recurring_value || 0) > 0 && ` + $${Number(deal.recurring_value).toLocaleString()}/mo`}
+                      </span>
+                    </div>
+                    {deal.won_date && (
+                      <div className="font-mono text-[11px] text-gray-500 mt-0.5">Won {deal.won_date}</div>
+                    )}
+                    <select
+                      value={deal.stage_id || ''}
+                      onChange={(e) => changeDealStage(deal, e.target.value)}
+                      className="w-full mt-2 px-2.5 py-2 min-h-11 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
+                      aria-label={`Stage for ${deal.pipeline} deal`}
+                    >
+                      {allStages
+                        .filter(s => s.pipeline === deal.pipeline)
+                        .map(s => (
+                          <option key={s.id} value={s.id}>{s.name}</option>
+                        ))}
+                    </select>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Follow-ups for this lead */}
           <div className="bg-gray-900 border border-gray-800 rounded-lg p-4">
             <div className="flex items-center justify-between mb-2">
@@ -218,7 +314,9 @@ export default function ContactDetailPage() {
                   <div key={r.id} className="flex items-center justify-between gap-2 px-3 py-2 rounded-md bg-gray-800/50">
                     <div className="min-w-0">
                       <div className="text-sm text-white truncate">{r.title}</div>
-                      <div className="font-mono text-[11px] text-gray-500">Due {r.due_date}</div>
+                      <div className="font-mono text-[11px] text-gray-500">
+                        {r.snoozed_until ? `Snoozed until ${r.snoozed_until}` : `Due ${r.due_date}`}
+                      </div>
                     </div>
                     <button
                       onClick={async () => {
@@ -236,15 +334,9 @@ export default function ContactDetailPage() {
           </div>
         </div>
 
-        {/* Main column: actions + unified activity feed, like Close */}
-        <div>
+        {/* Main column: actions + composer + unified activity feed, like Close */}
+        <div className={mobileTab === 'details' ? 'hidden lg:block' : ''}>
           <div className="flex flex-wrap gap-2 mb-4">
-            <button
-              onClick={() => setShowActivity(true)}
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 min-h-11 rounded-lg bg-green-500 hover:bg-green-600 text-white text-sm font-medium"
-            >
-              <Plus className="w-4 h-4" /> Log Activity
-            </button>
             <button
               onClick={() => setShowReminder(true)}
               className="inline-flex items-center gap-1.5 px-4 py-2.5 min-h-11 rounded-lg bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium"
@@ -262,6 +354,58 @@ export default function ContactDetailPage() {
           </div>
 
           <div className="bg-gray-900 border border-gray-800 rounded-lg p-4">
+            {/* Composer on top of the feed: log where you read history */}
+            <div className="pb-4 mb-4 border-b border-gray-800">
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {['call', 'email', 'sms', 'meeting', 'note'].map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setCType(t)}
+                    className={`px-3 min-h-11 inline-flex items-center rounded-full border text-sm capitalize transition-colors ${
+                      cType === t
+                        ? 'bg-gray-100 border-gray-100 text-gray-950 font-medium'
+                        : 'border-gray-800 text-gray-400 hover:text-white hover:border-gray-700'
+                    }`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+              {cType === 'call' && (
+                <select
+                  value={cOutcome}
+                  onChange={(e) => setCOutcome(e.target.value)}
+                  className="w-full px-3 py-2.5 min-h-11 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm mb-2"
+                >
+                  <option value="">Select outcome...</option>
+                  <option value="connected">Connected</option>
+                  <option value="voicemail">Voicemail</option>
+                  <option value="no_answer">No answer</option>
+                  <option value="wrong_number">Wrong number</option>
+                </select>
+              )}
+              <input
+                placeholder="Subject (optional)"
+                value={cSubject}
+                onChange={(e) => setCSubject(e.target.value)}
+                className="w-full px-3 py-2.5 min-h-11 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm mb-2"
+              />
+              <textarea
+                placeholder="Notes..."
+                rows={3}
+                value={cBody}
+                onChange={(e) => setCBody(e.target.value)}
+                className="w-full px-3 py-2.5 min-h-11 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
+              />
+              <button
+                onClick={submitComposer}
+                disabled={cSaving}
+                className="mt-3 px-4 py-2.5 min-h-11 rounded-lg bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white text-sm font-medium"
+              >
+                {cSaving ? 'Logging...' : `Log ${cType}`}
+              </button>
+            </div>
+
             <h2 className="font-semibold text-white mb-3">Activity</h2>
             {activities.length === 0 ? (
               <p className="text-gray-500 text-sm">No activity yet. Log your first call or note above.</p>
@@ -295,12 +439,6 @@ export default function ContactDetailPage() {
         </div>
       </div>
 
-      {showActivity && (
-        <ActivityModal
-          contactId={id}
-          onClose={() => { setShowActivity(false); fetchData() }}
-        />
-      )}
       {showReminder && (
         <ReminderModal
           contactId={id}
@@ -366,67 +504,6 @@ function EditForm({ contact, onSave }: { contact: Contact; onSave: () => void })
         {saving ? 'Saving...' : 'Save Changes'}
       </button>
     </form>
-  )
-}
-
-function ActivityModal({ contactId, onClose }: { contactId: string; onClose: () => void }) {
-  const [type, setType] = useState('call')
-  const [subject, setSubject] = useState('')
-  const [body, setBody] = useState('')
-  const [outcome, setOutcome] = useState('')
-  const [saving, setSaving] = useState(false)
-  const supabase = createClient()
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setSaving(true)
-    await supabase.from('activities').insert([{
-      contact_id: contactId,
-      type,
-      subject: subject || null,
-      body: body || null,
-      outcome: outcome || null,
-      direction: 'outbound',
-    }])
-    setSaving(false)
-    onClose()
-  }
-
-  const input = "w-full px-3 py-2.5 min-h-11 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative bg-gray-900 border border-gray-700 rounded-xl p-6 w-full max-w-md">
-        <h2 className="text-lg font-bold text-white mb-4">Log Activity</h2>
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <select value={type} onChange={(e) => setType(e.target.value)} className={input}>
-            <option value="call">Call</option>
-            <option value="email">Email</option>
-            <option value="sms">SMS</option>
-            <option value="meeting">Meeting</option>
-            <option value="note">Note</option>
-          </select>
-          {type === 'call' && (
-            <select value={outcome} onChange={(e) => setOutcome(e.target.value)} className={input}>
-              <option value="">Select outcome...</option>
-              <option value="connected">Connected</option>
-              <option value="voicemail">Voicemail</option>
-              <option value="no_answer">No answer</option>
-              <option value="wrong_number">Wrong number</option>
-            </select>
-          )}
-          <input className={input} placeholder="Subject (optional)" value={subject} onChange={(e) => setSubject(e.target.value)} />
-          <textarea className={input} placeholder="Notes..." rows={4} value={body} onChange={(e) => setBody(e.target.value)} />
-          <div className="flex gap-3">
-            <button type="button" onClick={onClose} className="flex-1 py-2.5 min-h-11 rounded-lg bg-gray-800 text-gray-300 text-sm hover:bg-gray-700">Cancel</button>
-            <button type="submit" disabled={saving} className="flex-1 py-2.5 min-h-11 rounded-lg bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white text-sm font-medium">
-              {saving ? 'Saving...' : 'Log Activity'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
   )
 }
 
