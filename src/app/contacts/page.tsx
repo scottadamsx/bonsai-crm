@@ -7,12 +7,14 @@ import AppLayout from '@/components/AppLayout'
 import Link from 'next/link'
 import { Plus, Star, Phone, ChevronRight } from 'lucide-react'
 import type { Contact } from '@/lib/types'
+import { LEAD_STATUSES, leadStatusOf, leadStatusColor } from '@/lib/leadStatus'
 
 export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([])
   const [search, setSearch] = useState('')
   const [filterType, setFilterType] = useState('')
   const [filterCategory, setFilterCategory] = useState('')
+  const [filterStatus, setFilterStatus] = useState('')
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
   const supabase = createClient()
@@ -40,7 +42,8 @@ export default function ContactsPage() {
       (c.email || '').toLowerCase().includes(search.toLowerCase())
     const matchType = !filterType || c.contact_type === filterType
     const matchCategory = !filterCategory || c.category === filterCategory
-    return matchSearch && matchType && matchCategory
+    const matchStatus = !filterStatus || leadStatusOf(c) === filterStatus
+    return matchSearch && matchType && matchCategory && matchStatus
   })
 
   const categories = [...new Set(contacts.map(c => c.category).filter((c): c is string => Boolean(c)))]
@@ -90,7 +93,7 @@ export default function ContactsPage() {
         ))}
       </div>
       {categories.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-5">
+        <div className="flex flex-wrap gap-2 mb-3">
           <button onClick={() => setFilterCategory('')} className={pill(filterCategory === '')}>
             All categories
           </button>
@@ -101,6 +104,17 @@ export default function ContactsPage() {
           ))}
         </div>
       )}
+      <div className="flex flex-wrap gap-2 mb-5">
+        <button onClick={() => setFilterStatus('')} className={pill(filterStatus === '')}>
+          All statuses
+        </button>
+        {LEAD_STATUSES.map((s) => (
+          <button key={s.value} onClick={() => setFilterStatus(s.value)} className={pill(filterStatus === s.value)}>
+            <span className="inline-block w-2 h-2 rounded-full mr-1.5" style={{ backgroundColor: s.color }} />
+            {s.value}
+          </button>
+        ))}
+      </div>
 
       {/* Leads table: quiet list styling, hairline dividers, no card box */}
       {loading ? (
@@ -129,7 +143,7 @@ export default function ContactsPage() {
           <p className="text-base font-medium text-white">No leads match</p>
           <p className="text-gray-400 text-sm mt-1">Nothing fits the current search and filters.</p>
           <button
-            onClick={() => { setSearch(''); setFilterType(''); setFilterCategory('') }}
+            onClick={() => { setSearch(''); setFilterType(''); setFilterCategory(''); setFilterStatus('') }}
             className="inline-flex items-center px-5 min-h-11 mt-6 rounded-lg bg-gray-800 hover:bg-gray-700 text-white font-medium text-sm"
           >
             Clear search and filters
@@ -141,6 +155,7 @@ export default function ContactsPage() {
             <thead>
               <tr className="border-b border-gray-800 text-left font-mono text-[11px] uppercase tracking-[0.14em] text-gray-500">
                 <th className="font-medium px-4 py-3">Lead</th>
+                <th className="font-medium px-4 py-3 hidden md:table-cell">Status</th>
                 <th className="font-medium px-4 py-3 hidden md:table-cell">Type</th>
                 <th className="font-medium px-4 py-3 hidden lg:table-cell">Category</th>
                 <th className="font-medium px-4 py-3 hidden sm:table-cell">Phone</th>
@@ -165,6 +180,12 @@ export default function ContactsPage() {
                         {contact.first_name} {contact.last_name}
                       </div>
                     )}
+                  </td>
+                  <td className="px-4 py-3.5 hidden md:table-cell">
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-gray-800 text-gray-300 text-xs">
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: leadStatusColor(leadStatusOf(contact)) }} />
+                      {leadStatusOf(contact)}
+                    </span>
                   </td>
                   <td className="px-4 py-3.5 hidden md:table-cell">
                     {contact.contact_type && (
@@ -215,6 +236,7 @@ function AddContactModal({ onClose }: { onClose: () => void }) {
     phone: '',
     category: '',
     contact_type: 'prospect',
+    lead_status: 'Spotted',
     notes: '',
   })
   const [saving, setSaving] = useState(false)
@@ -223,7 +245,12 @@ function AddContactModal({ onClose }: { onClose: () => void }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
-    await supabase.from('contacts').insert([form])
+    const { error } = await supabase.from('contacts').insert([form])
+    if (error) {
+      // lead_status lands with migration 002; until it is applied, save without it
+      const { lead_status: _dropped, ...rest } = form
+      await supabase.from('contacts').insert([rest])
+    }
     setSaving(false)
     onClose()
   }
@@ -285,6 +312,16 @@ function AddContactModal({ onClose }: { onClose: () => void }) {
               <option value="client">Client</option>
             </select>
           </div>
+          <select
+            value={form.lead_status}
+            onChange={(e) => setForm({ ...form, lead_status: e.target.value })}
+            className="w-full px-3 py-2.5 min-h-11 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
+            aria-label="Lead status"
+          >
+            {LEAD_STATUSES.map((s) => (
+              <option key={s.value} value={s.value}>Status: {s.value}</option>
+            ))}
+          </select>
           <textarea
             placeholder="Notes"
             value={form.notes}

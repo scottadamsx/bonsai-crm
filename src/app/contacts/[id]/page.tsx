@@ -21,6 +21,7 @@ import {
   Check,
 } from 'lucide-react'
 import type { Contact, Activity, Reminder } from '@/lib/types'
+import { LEAD_STATUSES, leadStatusOf, leadStatusColor } from '@/lib/leadStatus'
 
 export default function ContactDetailPage() {
   const params = useParams()
@@ -33,7 +34,19 @@ export default function ContactDetailPage() {
   const [showActivity, setShowActivity] = useState(false)
   const [showReminder, setShowReminder] = useState(false)
   const [editing, setEditing] = useState(false)
+  const [statusError, setStatusError] = useState('')
   const supabase = createClient()
+
+  const changeStatus = async (value: string) => {
+    if (!contact) return
+    setStatusError('')
+    const { error } = await supabase.from('contacts').update({ lead_status: value }).eq('id', contact.id)
+    if (error) {
+      setStatusError('Could not save status. Try again.')
+      return
+    }
+    setContact({ ...contact, lead_status: value })
+  }
 
   useEffect(() => {
     fetchData()
@@ -111,6 +124,10 @@ export default function ContactDetailPage() {
             </div>
 
             <div className="flex flex-wrap gap-1.5 mt-3">
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-gray-800 text-gray-200 text-xs">
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: leadStatusColor(leadStatusOf(contact)) }} />
+                {leadStatusOf(contact)}
+              </span>
               {contact.contact_type && (
                 <span className="px-2 py-0.5 rounded-full bg-gray-800 text-gray-300 text-xs capitalize">
                   {contact.contact_type}
@@ -159,6 +176,23 @@ export default function ContactDetailPage() {
                 {contact.notes}
               </p>
             )}
+
+            <div className="mt-4 pt-3 border-t border-gray-800">
+              <label htmlFor="lead-status" className="font-mono text-[11px] uppercase tracking-[0.14em] text-gray-500">
+                Lead status
+              </label>
+              <select
+                id="lead-status"
+                value={leadStatusOf(contact)}
+                onChange={(e) => changeStatus(e.target.value)}
+                className="w-full mt-1.5 px-3 py-2 min-h-11 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
+              >
+                {LEAD_STATUSES.map((s) => (
+                  <option key={s.value} value={s.value}>{s.value}</option>
+                ))}
+              </select>
+              {statusError && <p className="text-xs text-red-400 mt-1.5">{statusError}</p>}
+            </div>
 
             {editing && <EditForm contact={contact} onSave={() => { setEditing(false); fetchData() }} />}
           </div>

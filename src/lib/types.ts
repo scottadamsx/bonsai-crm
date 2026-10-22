@@ -8,6 +8,7 @@ export interface Contact {
   address: string | null
   category: string | null
   contact_type: 'prospect' | 'club' | 'client'
+  lead_status: string | null
   website_status: string | null
   priority: boolean
   notes: string | null
@@ -32,6 +33,7 @@ export interface Deal {
   pipeline: string
   value: number
   recurring_value: number
+  won_date: string | null
   position: number
   contact?: Contact
   stage?: PipelineStage
@@ -54,6 +56,7 @@ export interface Reminder {
   contact_id: string
   title: string
   due_date: string
+  snoozed_until: string | null
   completed: boolean
   completed_at: string | null
   contact?: Contact
@@ -83,5 +86,17 @@ export interface SmartView {
     contact_type?: string
     priority_only?: boolean
     pipeline?: string
+    lead_statuses?: string[]
+    no_activity_days?: number
+    no_followup?: boolean
+    pinned?: boolean
+    custom_field?: { name: string; value: string }
   }
+}
+
+export interface CustomFieldDef {
+  id: string
+  name: string
+  field_type: 'text' | 'number' | 'date' | 'select'
+  options: string[] | null
 }
