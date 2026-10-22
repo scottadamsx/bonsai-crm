@@ -20,7 +20,9 @@ import {
   Clock,
   Check,
 } from 'lucide-react'
-import type { Contact, Activity, Reminder } from '@/lib/types'
+import type { Contact, Activity, Reminder, Deal, PipelineStage, CustomFieldDef } from '@/lib/types'
+
+type DealRow = Deal & { stage?: { name: string } | null }
 import { LEAD_STATUSES, leadStatusOf, leadStatusColor } from '@/lib/leadStatus'
 import { moveDealToStage } from '@/lib/deals'
 
@@ -31,8 +33,8 @@ export default function ContactDetailPage() {
   const [contact, setContact] = useState<Contact | null>(null)
   const [activities, setActivities] = useState<Activity[]>([])
   const [reminders, setReminders] = useState<Reminder[]>([])
-  const [deals, setDeals] = useState<any[]>([])
-  const [allStages, setAllStages] = useState<any[]>([])
+  const [deals, setDeals] = useState<DealRow[]>([])
+  const [allStages, setAllStages] = useState<PipelineStage[]>([])
   const [loading, setLoading] = useState(true)
   const [showReminder, setShowReminder] = useState(false)
   const [editing, setEditing] = useState(false)
@@ -104,7 +106,7 @@ export default function ContactDetailPage() {
     fetchData()
   }
 
-  const changeDealStage = async (deal: any, stageId: string) => {
+  const changeDealStage = async (deal: DealRow, stageId: string) => {
     const stage = allStages.find(s => s.id === stageId)
     if (!stage) return
     await moveDealToStage(supabase, deal.id, stageId, stage.name, deal.won_date)
@@ -463,7 +465,7 @@ function EditForm({ contact, onSave }: { contact: Contact; onSave: () => void })
     notes: contact.notes || '',
     priority: contact.priority,
   })
-  const [fieldDefs, setFieldDefs] = useState<any[]>([])
+  const [fieldDefs, setFieldDefs] = useState<CustomFieldDef[]>([])
   const [cfValues, setCfValues] = useState<Record<string, unknown>>(contact.custom_fields || {})
   const [saving, setSaving] = useState(false)
   const supabase = createClient()
@@ -533,7 +535,7 @@ function EditForm({ contact, onSave }: { contact: Contact; onSave: () => void })
         </div>
       )}
       <div className="flex items-center gap-4">
-        <select value={form.contact_type} onChange={(e) => setForm({ ...form, contact_type: e.target.value as any })} className={input + ' w-auto'}>
+        <select value={form.contact_type} onChange={(e) => setForm({ ...form, contact_type: e.target.value as Contact['contact_type'] })} className={input + ' w-auto'}>
           <option value="prospect">Prospect</option>
           <option value="club">Club</option>
           <option value="client">Client</option>

@@ -49,7 +49,7 @@ export default async function DashboardPage() {
     .order('due_date', { ascending: true })
     .limit(25)
   const dueReminders = (dueRows || [])
-    .filter((r: any) => !r.snoozed_until || r.snoozed_until <= today)
+    .filter((r: { snoozed_until?: string | null }) => !r.snoozed_until || r.snoozed_until <= today)
     .slice(0, 5)
 
   // Recent activities

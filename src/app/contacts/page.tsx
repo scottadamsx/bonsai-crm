@@ -272,7 +272,8 @@ function AddContactModal({ onClose }: { onClose: () => void }) {
     const { error } = await supabase.from('contacts').insert([form])
     if (error) {
       // lead_status lands with migration 002; until it is applied, save without it
-      const { lead_status: _dropped, ...rest } = form
+      const rest: Record<string, unknown> = { ...form }
+      delete rest.lead_status
       await supabase.from('contacts').insert([rest])
     }
     setSaving(false)

@@ -7,6 +7,16 @@ import AppLayout from '@/components/AppLayout'
 import Link from 'next/link'
 import { AlarmClock, Phone } from 'lucide-react'
 import ActivityIcon from '@/components/ActivityIcon'
+import type { Activity, Reminder } from '@/lib/types'
+
+type ContactJoin = {
+  business_name: string | null
+  first_name: string | null
+  last_name: string | null
+  phone?: string | null
+} | null
+type ReminderRow = Reminder & { contact?: ContactJoin }
+type ActivityRow = Activity & { contact?: ContactJoin }
 
 const addDays = (dateStr: string, days: number) => {
   const d = new Date(`${dateStr}T12:00:00`)
@@ -16,14 +26,14 @@ const addDays = (dateStr: string, days: number) => {
 
 // A snoozed reminder resurfaces on its snoozed_until date; until then the
 // snooze date is its effective due date everywhere it is grouped or shown.
-const effectiveDate = (r: any) => r.snoozed_until || r.due_date
+const effectiveDate = (r: ReminderRow) => r.snoozed_until || r.due_date
 
 type InboxTab = 'all' | 'due' | 'activity' | 'done'
 
 export default function RemindersPage() {
   const [reminders, setReminders] = useState<any[]>([])
-  const [doneReminders, setDoneReminders] = useState<any[]>([])
-  const [latestActivity, setLatestActivity] = useState<any[]>([])
+  const [doneReminders, setDoneReminders] = useState<ReminderRow[]>([])
+  const [latestActivity, setLatestActivity] = useState<ActivityRow[]>([])
   const [tab, setTab] = useState<InboxTab>('all')
   const [loading, setLoading] = useState(true)
   const [snoozeError, setSnoozeError] = useState('')
@@ -55,7 +65,7 @@ export default function RemindersPage() {
       .order('created_at', { ascending: false })
       .limit(100)
     const seen = new Set<string>()
-    const latest: any[] = []
+    const latest: ActivityRow[] = []
     for (const a of acts || []) {
       if (seen.has(a.contact_id)) continue
       seen.add(a.contact_id)
@@ -89,7 +99,7 @@ export default function RemindersPage() {
   const dueToday = sorted.filter(r => effectiveDate(r) === today)
   const upcoming = sorted.filter(r => effectiveDate(r) > today)
 
-  const ReminderCard = ({ r, isOverdue }: { r: any; isOverdue?: boolean }) => {
+  const ReminderCard = ({ r, isOverdue }: { r: ReminderRow; isOverdue?: boolean }) => {
     const [menuOpen, setMenuOpen] = useState(false)
     const snoozed = Boolean(r.snoozed_until && r.snoozed_until > today)
     const options = [

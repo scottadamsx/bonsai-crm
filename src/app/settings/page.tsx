@@ -5,11 +5,12 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import AppLayout from '@/components/AppLayout'
 import { ChevronDown, ChevronUp, ClipboardList, ListPlus, Mail, Pencil, Plus, X } from 'lucide-react'
+import type { CustomFieldDef } from '@/lib/types'
 
 export default function SettingsPage() {
   const [stages, setStages] = useState<any[]>([])
   const [templates, setTemplates] = useState<any[]>([])
-  const [fieldDefs, setFieldDefs] = useState<any[]>([])
+  const [fieldDefs, setFieldDefs] = useState<CustomFieldDef[]>([])
   const [pipeline, setPipeline] = useState('websites')
   const [newStageName, setNewStageName] = useState('')
   const [editingTemplate, setEditingTemplate] = useState<any>(null)
@@ -46,7 +47,7 @@ export default function SettingsPage() {
     fetchData()
   }
 
-  const deleteField = async (def: any) => {
+  const deleteField = async (def: CustomFieldDef) => {
     if (!confirm(`Delete the "${def.name}" field definition? Values already saved on leads are kept.`)) return
     await supabase.from('custom_field_defs').delete().eq('id', def.id)
     fetchData()
@@ -197,7 +198,7 @@ export default function SettingsPage() {
               <div>
                 <span className="text-sm text-white font-medium">{def.name}</span>
                 <span className="font-mono text-xs text-gray-500 ml-2 capitalize">{def.field_type}</span>
-                {def.field_type === 'select' && def.options?.length > 0 && (
+                {def.field_type === 'select' && def.options && def.options.length > 0 && (
                   <span className="text-xs text-gray-500 ml-2">{def.options.join(', ')}</span>
                 )}
               </div>

@@ -7,6 +7,7 @@ import AppLayout from '@/components/AppLayout'
 import Link from 'next/link'
 import { Filter, Pin, Plus, Star, X } from 'lucide-react'
 import { LEAD_STATUSES, leadStatusOf, leadStatusColor } from '@/lib/leadStatus'
+import type { CustomFieldDef, SmartView } from '@/lib/types'
 
 export default function SmartViewsPage() {
   const [views, setViews] = useState<any[]>([])
@@ -97,7 +98,7 @@ export default function SmartViewsPage() {
     setResults(filtered)
   }
 
-  const togglePin = async (view: any) => {
+  const togglePin = async (view: SmartView) => {
     const filters = { ...view.filters, pinned: !view.filters?.pinned }
     await supabase.from('smart_views').update({ filters }).eq('id', view.id)
     fetchViews()
@@ -212,7 +213,7 @@ function AddViewModal({ onClose }: { onClose: () => void }) {
   const [noActivityDays, setNoActivityDays] = useState('')
   const [noFollowup, setNoFollowup] = useState(false)
   const [pinned, setPinned] = useState(false)
-  const [fieldDefs, setFieldDefs] = useState<any[]>([])
+  const [fieldDefs, setFieldDefs] = useState<CustomFieldDef[]>([])
   const [cfName, setCfName] = useState('')
   const [cfValue, setCfValue] = useState('')
   const [saving, setSaving] = useState(false)

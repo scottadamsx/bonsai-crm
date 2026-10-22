@@ -125,7 +125,7 @@ export default function PipelinePage() {
                   </span>
                 </div>
                 <div className="divide-y divide-gray-800 border-t border-b border-gray-800">
-                  {stageDeals.map((deal: any) => (
+                  {stageDeals.map((deal) => (
                     <Link key={deal.id} href={`/contacts/${deal.contact_id}`} className="block py-3 min-h-11">
                       <div className="flex items-center gap-1.5">
                         <span className="font-medium text-white text-sm truncate">
