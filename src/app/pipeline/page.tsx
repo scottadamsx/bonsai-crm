@@ -7,6 +7,7 @@ import AppLayout from '@/components/AppLayout'
 import Link from 'next/link'
 import { Star, Phone } from 'lucide-react'
 import type { Deal, PipelineStage } from '@/lib/types'
+import { moveDealToStage, wonDateForMove } from '@/lib/deals'
 
 export default function PipelinePage() {
   const [stages, setStages] = useState<PipelineStage[]>([])
@@ -40,16 +41,18 @@ export default function PipelinePage() {
 
   const handleDrop = async (stageId: string) => {
     if (!draggedDeal) return
+    const deal = deals.find(d => d.id === draggedDeal)
+    const stage = stages.find(s => s.id === stageId)
+    if (!deal || !stage) return
 
-    // Optimistic update
+    // Optimistic update, including the won date stamp
     setDeals(prev => prev.map(d =>
-      d.id === draggedDeal ? { ...d, stage_id: stageId } : d
+      d.id === draggedDeal
+        ? { ...d, stage_id: stageId, won_date: wonDateForMove(stage.name, d.won_date) }
+        : d
     ))
 
-    await supabase
-      .from('deals')
-      .update({ stage_id: stageId, updated_at: new Date().toISOString() })
-      .eq('id', draggedDeal)
+    await moveDealToStage(supabase, draggedDeal, stageId, stage.name, deal.won_date)
 
     setDraggedDeal(null)
   }
@@ -151,6 +154,9 @@ export default function PipelinePage() {
                           {Number(deal.recurring_value || 0) > 0 &&
                             ` + $${Number(deal.recurring_value).toLocaleString()}/mo`}
                         </div>
+                        {deal.won_date && (
+                          <div className="font-mono text-xs text-gray-500 mt-1">Won {deal.won_date}</div>
+                        )}
                       </Link>
                       {deal.contact?.phone && (
                         <a

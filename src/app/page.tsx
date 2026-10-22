@@ -39,15 +39,18 @@ export default async function DashboardPage() {
     ? Math.round(((clientCount || 0) / totalDeals) * 100)
     : 0
 
-  // Reminders due today/overdue
+  // Reminders due today/overdue (snoozed ones stay out until their date)
   const today = new Date().toISOString().split('T')[0]
-  const { data: dueReminders } = await supabase
+  const { data: dueRows } = await supabase
     .from('reminders')
     .select('*, contact:contacts(business_name, first_name, last_name)')
     .eq('completed', false)
     .lte('due_date', today)
     .order('due_date', { ascending: true })
-    .limit(5)
+    .limit(25)
+  const dueReminders = (dueRows || [])
+    .filter((r: any) => !r.snoozed_until || r.snoozed_until <= today)
+    .slice(0, 5)
 
   // Recent activities
   const { data: recentActivities } = await supabase
