@@ -7,6 +7,7 @@ import AppLayout from '@/components/AppLayout'
 import Link from 'next/link'
 import { Plus, Star, Phone, ChevronRight } from 'lucide-react'
 import type { Contact } from '@/lib/types'
+import { fetchAll } from '@/lib/fetchAll'
 import { LEAD_STATUSES, leadStatusOf, leadStatusColor } from '@/lib/leadStatus'
 
 export default function ContactsPage() {
@@ -27,18 +28,20 @@ export default function ContactsPage() {
 
   const fetchContacts = async () => {
     setLoading(true)
-    const { data } = await supabase
+    const data = await fetchAll<Contact>((from, to) => supabase
       .from('contacts')
       .select('*')
       .order('business_name', { ascending: true })
-    setContacts(data || [])
+      .range(from, to))
+    setContacts(data)
     // Latest activity per lead, for the phone row (mobile spec rule 5)
-    const { data: acts } = await supabase
+    const acts = await fetchAll<{ contact_id: string; created_at: string }>((from, to) => supabase
       .from('activities')
       .select('contact_id, created_at')
       .order('created_at', { ascending: false })
+      .range(from, to))
     const latest = new Map<string, string>()
-    for (const a of acts || []) {
+    for (const a of acts) {
       if (!latest.has(a.contact_id)) latest.set(a.contact_id, a.created_at)
     }
     setLastActivity(latest)

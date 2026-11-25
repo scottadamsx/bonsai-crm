@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { Filter, Pin, Plus, Star, X } from 'lucide-react'
 import { LEAD_STATUSES, leadStatusOf, leadStatusColor } from '@/lib/leadStatus'
 import type { CustomFieldDef, SmartView } from '@/lib/types'
+import { fetchAll } from '@/lib/fetchAll'
 
 export default function SmartViewsPage() {
   const [views, setViews] = useState<any[]>([])
@@ -43,8 +44,9 @@ export default function SmartViewsPage() {
     if (f.priority_only) query = query.eq('priority', true)
     if (f.tags?.length) query = query.overlaps('tags', f.tags)
 
-    const { data: contacts } = await query.order('business_name')
-    let filtered = contacts || []
+    const ordered = query.order('business_name')
+    const contacts = await fetchAll<any>((from, to) => ordered.range(from, to))
+    let filtered = contacts
 
     // Filter by pipeline stage if specified
     if (f.stage_ids?.length) {
@@ -71,12 +73,13 @@ export default function SmartViewsPage() {
 
     // Activity based filters (gap #3): latest activity per lead, computed live
     if (f.no_activity_days || f.no_followup) {
-      const { data: acts } = await supabase
+      const acts = await fetchAll<{ contact_id: string; created_at: string }>((from, to) => supabase
         .from('activities')
         .select('contact_id, created_at')
         .order('created_at', { ascending: false })
+        .range(from, to))
       const lastActivity = new Map<string, string>()
-      for (const a of acts || []) {
+      for (const a of acts) {
         if (!lastActivity.has(a.contact_id)) lastActivity.set(a.contact_id, a.created_at)
       }
       filtered = filtered.map(c => ({ ...c, _lastActivity: lastActivity.get(c.id) || null }))

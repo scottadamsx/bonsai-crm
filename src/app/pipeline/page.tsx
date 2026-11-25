@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { Star, Phone } from 'lucide-react'
 import type { Deal, PipelineStage } from '@/lib/types'
 import { moveDealToStage, wonDateForMove } from '@/lib/deals'
+import { fetchAll } from '@/lib/fetchAll'
 
 export default function PipelinePage() {
   const [stages, setStages] = useState<PipelineStage[]>([])
@@ -241,12 +242,13 @@ function AddDealForm({ pipeline, onAdd }: { pipeline: string; onAdd: () => void 
       .eq('pipeline', pipeline)
     const existingIds = (existingDeals || []).map(d => d.contact_id)
 
-    const { data } = await supabase
+    const data = await fetchAll<{ id: string; business_name: string | null; first_name: string | null; last_name: string | null }>((from, to) => supabase
       .from('contacts')
       .select('id, business_name, first_name, last_name')
       .order('business_name')
+      .range(from, to))
 
-    setContacts((data || []).filter(c => !existingIds.includes(c.id)))
+    setContacts(data.filter(c => !existingIds.includes(c.id)))
   }
 
   const handleAdd = async () => {
