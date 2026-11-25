@@ -26,6 +26,14 @@ type DealRow = Deal & { stage?: { name: string } | null }
 import { LEAD_STATUSES, leadStatusOf, leadStatusColor } from '@/lib/leadStatus'
 import { moveDealToStage } from '@/lib/deals'
 
+function websiteHref(value: string): string | null {
+  const v = value.trim()
+  if (!v || /\s/.test(v)) return null
+  if (/^https?:\/\//i.test(v)) return v
+  if (/^[a-z0-9.-]+\.[a-z]{2,}(\/\S*)?$/i.test(v)) return `https://${v}`
+  return null
+}
+
 export default function ContactDetailPage() {
   const params = useParams()
   const router = useRouter()
@@ -229,7 +237,13 @@ export default function ContactDetailPage() {
               {contact.website_status && (
                 <div className="flex items-center gap-2.5">
                   <Globe className="w-4 h-4 text-gray-500 shrink-0" />
-                  <span className="text-gray-200">{contact.website_status}</span>
+                  {websiteHref(contact.website_status) ? (
+                    <a href={websiteHref(contact.website_status)!} target="_blank" rel="noreferrer" className="text-gray-200 hover:text-white truncate">
+                      {contact.website_status}
+                    </a>
+                  ) : (
+                    <span className="text-gray-200">{contact.website_status}</span>
+                  )}
                 </div>
               )}
             </dl>
@@ -496,7 +510,7 @@ function EditForm({ contact, onSave }: { contact: Contact; onSave: () => void })
         <input className={input} placeholder="Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
         <input className={input} placeholder="Phone" type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
         <input className={input} placeholder="Address" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
-        <input className={input} placeholder="Website status" value={form.website_status} onChange={(e) => setForm({ ...form, website_status: e.target.value })} />
+        <input className={input} placeholder="Website (full URL if they have one, otherwise a status like None)" value={form.website_status} onChange={(e) => setForm({ ...form, website_status: e.target.value })} />
       </div>
       <textarea className={input} placeholder="Notes" rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
       {fieldDefs.length > 0 && (
