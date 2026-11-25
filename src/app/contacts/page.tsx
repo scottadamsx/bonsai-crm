@@ -5,14 +5,37 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import AppLayout from '@/components/AppLayout'
 import Link from 'next/link'
-import { Plus, Star, Phone, ChevronRight } from 'lucide-react'
+import { Plus, Star, Phone, Mail, Globe, ArrowUpDown } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import type { Contact } from '@/lib/types'
 import { fetchAll } from '@/lib/fetchAll'
 import { LEAD_STATUSES, leadStatusOf, leadStatusColor } from '@/lib/leadStatus'
 
+// Same URL test as the contact page: only real URLs become website links,
+// status words ("None", "Poor site") stay unlinked.
+function websiteHref(value: string): string | null {
+  const v = value.trim()
+  if (!v || /\s/.test(v)) return null
+  if (/^https?:\/\//i.test(v)) return v
+  if (/^[a-z0-9.-]+\.[a-z]{2,}(\/\S*)?$/i.test(v)) return `https://${v}`
+  return null
+}
+
+// Addresses are stored as one string ("street, city, province postal");
+// the city is the second segment when a street is present.
+function locationOf(address: string | null): string {
+  if (!address) return ''
+  const parts = address.split(',').map((part) => part.trim()).filter(Boolean)
+  if (parts.length >= 3) return parts[1]
+  return parts[0] || ''
+}
+
 export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([])
-  const [lastActivity, setLastActivity] = useState<Map<string, string>>(new Map())
+  const [activityCounts, setActivityCounts] = useState<Map<string, number>>(new Map())
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [sortDesc, setSortDesc] = useState(true)
+  const [visibleCount, setVisibleCount] = useState(250)
   const [search, setSearch] = useState('')
   const [filterType, setFilterType] = useState('')
   const [filterCategory, setFilterCategory] = useState('')
@@ -21,6 +44,7 @@ export default function ContactsPage() {
   const [showAdd, setShowAdd] = useState(false)
   const [showCategoryPicker, setShowCategoryPicker] = useState(false)
   const supabase = createClient()
+  const router = useRouter()
 
   useEffect(() => {
     fetchContacts()
@@ -34,17 +58,17 @@ export default function ContactsPage() {
       .order('business_name', { ascending: true })
       .range(from, to))
     setContacts(data)
-    // Latest activity per lead, for the phone row (mobile spec rule 5)
-    const acts = await fetchAll<{ contact_id: string; created_at: string }>((from, to) => supabase
+    // Activity count per lead, for the table's Activities column
+    const acts = await fetchAll<{ contact_id: string }>((from, to) => supabase
       .from('activities')
-      .select('contact_id, created_at')
+      .select('contact_id')
       .order('created_at', { ascending: false })
       .range(from, to))
-    const latest = new Map<string, string>()
+    const counts = new Map<string, number>()
     for (const a of acts) {
-      if (!latest.has(a.contact_id)) latest.set(a.contact_id, a.created_at)
+      counts.set(a.contact_id, (counts.get(a.contact_id) || 0) + 1)
     }
-    setLastActivity(latest)
+    setActivityCounts(counts)
     setLoading(false)
   }
 
@@ -60,6 +84,39 @@ export default function ContactsPage() {
     const matchStatus = !filterStatus || leadStatusOf(c) === filterStatus
     return matchSearch && matchType && matchCategory && matchStatus
   })
+
+  const sorted = [...filtered].sort((a, b) =>
+    sortDesc
+      ? b.created_at.localeCompare(a.created_at)
+      : a.created_at.localeCompare(b.created_at)
+  )
+  const visible = sorted.slice(0, visibleCount)
+  const activeFilterCount =
+    (search ? 1 : 0) + (filterType ? 1 : 0) + (filterCategory ? 1 : 0) + (filterStatus ? 1 : 0)
+
+  const toggleSelected = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+
+  const toggleSelectAll = () =>
+    setSelected(selected.size === filtered.length ? new Set() : new Set(filtered.map((c) => c.id)))
+
+  const applyBulkStatus = async (status: string) => {
+    if (!status || selected.size === 0) return
+    const { error } = await supabase.from('contacts').update({ lead_status: status }).in('id', [...selected])
+    if (error) return
+    setContacts((prev) => prev.map((c) => (selected.has(c.id) ? { ...c, lead_status: status } : c)))
+    setSelected(new Set())
+  }
+
+  useEffect(() => {
+    setVisibleCount(250)
+    setSelected(new Set())
+  }, [search, filterType, filterCategory, filterStatus])
 
   const categoryCounts = new Map<string, number>()
   for (const c of contacts) {
@@ -94,7 +151,7 @@ export default function ContactsPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-[28px] leading-9 font-bold text-white">Leads</h1>
-          <p className="font-mono text-xs uppercase tracking-[0.14em] text-gray-500 mt-1.5">{filtered.length} leads</p>
+          <p className="font-mono text-xs uppercase tracking-[0.14em] text-gray-500 mt-1.5">{filtered.length.toLocaleString()} leads</p>
         </div>
         <button
           onClick={() => setShowAdd(true)}
@@ -148,7 +205,52 @@ export default function ContactsPage() {
         ))}
       </div>
 
-      {/* Leads table: quiet list styling, hairline dividers, no card box */}
+      {/* Toolbar: filter summary + created sort (Close-style grammar) */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+        <div className="flex items-center gap-2 text-sm text-gray-400">
+          <span className="font-medium text-gray-300">Filters</span>
+          {activeFilterCount > 0 && (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-gray-800 text-gray-200 font-mono text-xs">
+              {activeFilterCount} active
+            </span>
+          )}
+          <span className="font-mono text-xs text-gray-500">
+            {filtered.length.toLocaleString()} Leads
+          </span>
+        </div>
+        <button
+          onClick={() => setSortDesc((d) => !d)}
+          className="inline-flex items-center gap-1.5 px-3 min-h-11 rounded-lg border border-gray-800 text-sm text-gray-300 hover:text-white hover:border-gray-700"
+        >
+          <ArrowUpDown className="w-3.5 h-3.5" />
+          Created: {sortDesc ? 'Newest first' : 'Oldest first'}
+        </button>
+      </div>
+
+      {selected.size > 0 && (
+        <div className="flex flex-wrap items-center gap-3 mb-3 px-4 py-2 rounded-lg bg-gray-900 border border-gray-800">
+          <span className="text-sm text-white font-medium">{selected.size.toLocaleString()} selected</span>
+          <select
+            defaultValue=""
+            onChange={(e) => { applyBulkStatus(e.target.value); e.target.value = '' }}
+            className="px-3 min-h-11 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
+            aria-label="Set status for selected leads"
+          >
+            <option value="" disabled>Set status</option>
+            {LEAD_STATUSES.map((s) => (
+              <option key={s.value} value={s.value}>{s.value}</option>
+            ))}
+          </select>
+          <button
+            onClick={() => setSelected(new Set())}
+            className="px-3 min-h-11 rounded-lg text-sm text-gray-300 hover:text-white"
+          >
+            Clear selection
+          </button>
+        </div>
+      )}
+
+      {/* Leads table: Close-style dense data table, BONSAI colors */}
       {loading ? (
         <p className="text-gray-500">Loading...</p>
       ) : contacts.length === 0 ? (
@@ -182,89 +284,136 @@ export default function ContactsPage() {
           </button>
         </div>
       ) : (
-        <div className="border-t border-gray-800">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-800 text-left font-mono text-[11px] uppercase tracking-[0.14em] text-gray-500">
-                <th className="font-medium px-4 py-3">Lead</th>
-                <th className="font-medium px-4 py-3 hidden md:table-cell">Status</th>
-                <th className="font-medium px-4 py-3 hidden md:table-cell">Type</th>
-                <th className="font-medium px-4 py-3 hidden lg:table-cell">Category</th>
-                <th className="font-medium px-4 py-3 hidden sm:table-cell">Phone</th>
-                <th className="font-medium px-4 py-3 hidden xl:table-cell">Email</th>
-                <th className="px-2 py-3 w-8"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-800/70">
-              {filtered.map((contact) => (
-                <tr key={contact.id} className="hover:bg-gray-900 transition-colors">
-                  <td className="px-4 py-3.5">
-                    <Link href={`/contacts/${contact.id}`} className="flex items-center gap-1.5 min-w-0">
-                      <span className="font-medium text-white truncate">
-                        {contact.business_name || `${contact.first_name} ${contact.last_name}`}
-                      </span>
-                      {contact.priority && (
-                        <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400 shrink-0" />
-                      )}
-                    </Link>
-                    {(contact.first_name || contact.last_name) && contact.business_name && (
-                      <div className="text-xs text-gray-500 truncate">
-                        {contact.first_name} {contact.last_name}
-                      </div>
-                    )}
-                    {/* Phone rows carry status + latest activity (rule 5);
-                        wider screens get them as table columns. */}
-                    <div className="md:hidden mt-1 flex items-center gap-2 text-xs text-gray-500">
-                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-gray-800 text-gray-300">
-                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: leadStatusColor(leadStatusOf(contact)) }} />
-                        {leadStatusOf(contact)}
-                      </span>
-                      <span className="font-mono">
-                        {lastActivity.has(contact.id)
-                          ? `Last activity ${lastActivity.get(contact.id)!.split('T')[0]}`
-                          : 'No activity yet'}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3.5 hidden md:table-cell">
-                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-gray-800 text-gray-300 text-xs">
-                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: leadStatusColor(leadStatusOf(contact)) }} />
-                      {leadStatusOf(contact)}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3.5 hidden md:table-cell">
-                    {contact.contact_type && (
-                      <span className="inline-block px-2 py-0.5 rounded-full bg-gray-800 text-gray-300 text-xs capitalize">
-                        {contact.contact_type}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3.5 text-gray-400 hidden lg:table-cell">
-                    {contact.category || ''}
-                  </td>
-                  <td className="px-4 py-3.5 hidden sm:table-cell">
-                    {contact.phone && (
-                      <a
-                        href={`tel:${contact.phone}`}
-                        className="inline-flex items-center gap-1.5 text-gray-300 hover:text-white"
-                      >
-                        <Phone className="w-3.5 h-3.5" /> {contact.phone}
-                      </a>
-                    )}
-                  </td>
-                  <td className="px-4 py-3.5 text-gray-400 hidden xl:table-cell truncate max-w-55">
-                    {contact.email || ''}
-                  </td>
-                  <td className="px-2 py-3.5">
-                    <Link href={`/contacts/${contact.id}`} aria-label="Open lead">
-                      <ChevronRight className="w-4 h-4 text-gray-600" />
-                    </Link>
-                  </td>
+        <>
+          <div className="overflow-x-auto border-t border-b border-gray-800">
+            <table className="w-full min-w-[880px] text-sm">
+              <thead>
+                <tr className="border-b border-gray-800 text-left font-mono text-[11px] uppercase tracking-[0.14em] text-gray-500">
+                  <th className="font-medium pl-4 pr-2 py-2.5 w-10">
+                    <input
+                      type="checkbox"
+                      aria-label="Select all filtered leads"
+                      checked={filtered.length > 0 && selected.size === filtered.length}
+                      ref={(el) => { if (el) el.indeterminate = selected.size > 0 && selected.size < filtered.length }}
+                      onChange={toggleSelectAll}
+                      className="w-4 h-4 accent-green-500 align-middle cursor-pointer"
+                    />
+                  </th>
+                  <th className="font-medium px-2 py-2.5">Name</th>
+                  <th className="font-medium px-1 py-2.5 w-9"></th>
+                  <th className="font-medium px-1 py-2.5 w-9"></th>
+                  <th className="font-medium px-2 py-2.5">Status</th>
+                  <th className="font-medium px-2 py-2.5">Category</th>
+                  <th className="font-medium px-2 py-2.5">Location</th>
+                  <th className="font-medium px-2 py-2.5">Created</th>
+                  <th className="font-medium px-2 py-2.5 text-right">Activities</th>
+                  <th className="font-medium px-2 py-2.5 w-10"></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-gray-800/70">
+                {visible.map((contact) => {
+                  const status = leadStatusOf(contact)
+                  const statusColor = leadStatusColor(status)
+                  const site = contact.website_status ? websiteHref(contact.website_status) : null
+                  return (
+                    <tr
+                      key={contact.id}
+                      onClick={(e) => {
+                        if ((e.target as HTMLElement).closest('a,button,input,select,label')) return
+                        router.push(`/contacts/${contact.id}`)
+                      }}
+                      className="h-10 hover:bg-gray-900 transition-colors cursor-pointer"
+                    >
+                      <td className="pl-4 pr-2 py-1.5">
+                        <input
+                          type="checkbox"
+                          aria-label="Select lead"
+                          checked={selected.has(contact.id)}
+                          onChange={() => toggleSelected(contact.id)}
+                          className="w-4 h-4 accent-green-500 align-middle cursor-pointer"
+                        />
+                      </td>
+                      <td className="px-2 py-1.5 max-w-55">
+                        <span className="flex items-center gap-1.5 min-w-0">
+                          <span className="font-medium text-white truncate">
+                            {contact.business_name || `${contact.first_name} ${contact.last_name}`}
+                          </span>
+                          {contact.priority && (
+                            <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400 shrink-0" />
+                          )}
+                        </span>
+                      </td>
+                      <td className="px-1 py-1.5 text-center">
+                        {contact.phone ? (
+                          <a href={`tel:${contact.phone}`} aria-label="Call lead" className="text-gray-300 hover:text-white">
+                            <Phone className="w-4 h-4 inline" />
+                          </a>
+                        ) : (
+                          <Phone className="w-4 h-4 inline text-gray-700" />
+                        )}
+                      </td>
+                      <td className="px-1 py-1.5 text-center">
+                        {contact.email ? (
+                          <a href={`mailto:${contact.email}`} aria-label="Email lead" className="text-gray-300 hover:text-white">
+                            <Mail className="w-4 h-4 inline" />
+                          </a>
+                        ) : (
+                          <Mail className="w-4 h-4 inline text-gray-700" />
+                        )}
+                      </td>
+                      <td className="px-2 py-1.5">
+                        <span
+                          className="inline-flex items-center px-2 py-0.5 rounded-full text-xs whitespace-nowrap"
+                          style={{ backgroundColor: `${statusColor}22`, color: statusColor }}
+                        >
+                          {status}
+                        </span>
+                      </td>
+                      <td className="px-2 py-1.5 text-gray-400 truncate max-w-40">{contact.category || ''}</td>
+                      <td className="px-2 py-1.5 text-gray-400 truncate max-w-40">{locationOf(contact.address)}</td>
+                      <td className="px-2 py-1.5 text-gray-400 whitespace-nowrap font-mono text-xs">
+                        {new Date(contact.created_at).toLocaleDateString('en-US')}
+                      </td>
+                      <td className="px-2 py-1.5 text-right font-mono text-xs text-gray-300">
+                        {activityCounts.get(contact.id) || 0}
+                      </td>
+                      <td className="px-2 py-1.5 text-center">
+                        {site ? (
+                          <a href={site} target="_blank" rel="noreferrer" aria-label="Open website" className="text-gray-300 hover:text-white">
+                            <Globe className="w-4 h-4 inline" />
+                          </a>
+                        ) : (
+                          <Globe className="w-4 h-4 inline text-gray-700" />
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+          <div className="flex flex-wrap items-center gap-3 mt-4">
+            <p className="font-mono text-xs text-gray-500">
+              Showing {visible.length.toLocaleString()} of {filtered.length.toLocaleString()}
+            </p>
+            {visibleCount < filtered.length && (
+              <>
+                <button
+                  onClick={() => setVisibleCount((n) => n + 250)}
+                  className="px-4 min-h-11 rounded-lg bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium"
+                >
+                  Show more
+                </button>
+                <button
+                  onClick={() => setVisibleCount(filtered.length)}
+                  className="px-4 min-h-11 rounded-lg bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium"
+                >
+                  Show all
+                </button>
+              </>
+            )}
+          </div>
+        </>
       )}
 
       {showAdd && <AddContactModal onClose={() => { setShowAdd(false); fetchContacts() }} />}
