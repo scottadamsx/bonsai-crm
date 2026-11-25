@@ -48,12 +48,26 @@ export default function ContactDetailPage() {
   const [editing, setEditing] = useState(false)
   const [statusError, setStatusError] = useState('')
   const [mobileTab, setMobileTab] = useState<'details' | 'activity'>('details')
-  // Inline composer state (sits on top of the activity feed, like Close)
+  // Inline composer state. No open forms on pages: only the type tabs show
+  // until one is clicked; the form opens for that type and closes on log,
+  // cancel, or clicking the active tab again.
   const [cType, setCType] = useState('call')
+  const [cOpen, setCOpen] = useState(false)
   const [cSubject, setCSubject] = useState('')
   const [cBody, setCBody] = useState('')
   const [cOutcome, setCOutcome] = useState('')
   const [cSaving, setCSaving] = useState(false)
+  const closeComposer = () => {
+    setCSubject('')
+    setCBody('')
+    setCOutcome('')
+    setCOpen(false)
+  }
+  const pickType = (t: string) => {
+    if (cOpen && cType === t) { closeComposer(); return }
+    setCType(t)
+    setCOpen(true)
+  }
   const supabase = createClient()
 
   const changeStatus = async (value: string) => {
@@ -108,9 +122,7 @@ export default function ContactDetailPage() {
       direction: 'outbound',
     }])
     setCSaving(false)
-    setCSubject('')
-    setCBody('')
-    setCOutcome('')
+    closeComposer()
     fetchData()
   }
 
@@ -370,15 +382,15 @@ export default function ContactDetailPage() {
           </div>
 
           <div className="bg-gray-900 border border-gray-800 rounded-lg p-4">
-            {/* Composer on top of the feed: log where you read history */}
+            {/* Composer on top of the feed: tabs only until a type is chosen */}
             <div className="pb-4 mb-4 border-b border-gray-800">
-              <div className="flex flex-wrap gap-1.5 mb-3">
+              <div className="flex flex-wrap gap-1.5">
                 {['call', 'email', 'sms', 'meeting', 'note'].map((t) => (
                   <button
                     key={t}
-                    onClick={() => setCType(t)}
+                    onClick={() => pickType(t)}
                     className={`px-3 min-h-11 inline-flex items-center rounded-full border text-sm capitalize transition-colors ${
-                      cType === t
+                      cOpen && cType === t
                         ? 'bg-gray-100 border-gray-100 text-gray-950 font-medium'
                         : 'border-gray-800 text-gray-400 hover:text-white hover:border-gray-700'
                     }`}
@@ -387,6 +399,8 @@ export default function ContactDetailPage() {
                   </button>
                 ))}
               </div>
+              {cOpen && (
+              <div className="mt-3">
               {cType === 'call' && (
                 <select
                   value={cOutcome}
@@ -413,13 +427,24 @@ export default function ContactDetailPage() {
                 onChange={(e) => setCBody(e.target.value)}
                 className="w-full px-3 py-2.5 min-h-11 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
               />
-              <button
-                onClick={submitComposer}
-                disabled={cSaving}
-                className="mt-3 px-4 py-2.5 min-h-11 rounded-lg bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white text-sm font-medium"
-              >
-                {cSaving ? 'Logging...' : `Log ${cType}`}
-              </button>
+              <div className="flex gap-2 mt-3">
+                <button
+                  onClick={submitComposer}
+                  disabled={cSaving}
+                  className="px-4 py-2.5 min-h-11 rounded-lg bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white text-sm font-medium"
+                >
+                  {cSaving ? 'Logging...' : `Log ${cType}`}
+                </button>
+                <button
+                  onClick={closeComposer}
+                  disabled={cSaving}
+                  className="px-4 py-2.5 min-h-11 rounded-lg bg-gray-800 hover:bg-gray-700 disabled:opacity-50 text-white text-sm font-medium"
+                >
+                  Cancel
+                </button>
+              </div>
+              </div>
+              )}
             </div>
 
             <h2 className="font-semibold text-white mb-3">Activity</h2>
