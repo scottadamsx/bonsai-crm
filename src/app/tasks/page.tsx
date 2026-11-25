@@ -34,6 +34,7 @@ export default function TasksPage() {
   const [leadSearch, setLeadSearch] = useState('')
   const [selectedLead, setSelectedLead] = useState<ContactOption | null>(null)
   const [showDone, setShowDone] = useState(false)
+  const [showForm, setShowForm] = useState(false)
   const [error, setError] = useState('')
   const supabase = createClient()
 
@@ -79,6 +80,7 @@ export default function TasksPage() {
     setTitle('')
     setLeadSearch('')
     setSelectedLead(null)
+    setShowForm(false)
     fetchTasks()
   }
 
@@ -175,8 +177,17 @@ export default function TasksPage() {
             {open.length} open {open.length === 1 ? 'task' : 'tasks'}
             {overdue.length > 0 && <span className="text-red-400"> · {overdue.length} overdue</span>}
           </p>
+          {!showForm && (
+            <button
+              onClick={() => setShowForm(true)}
+              className="mt-4 px-5 min-h-11 inline-flex items-center gap-1.5 rounded-lg bg-green-500 hover:bg-green-600 text-white text-sm font-medium"
+            >
+              <Plus className="w-4 h-4" /> Add task
+            </button>
+          )}
         </div>
 
+        {showForm && (
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
           <input
             value={title}
@@ -229,10 +240,17 @@ export default function TasksPage() {
             >
               <Plus className="w-4 h-4" /> Add task
             </button>
+            <button
+              onClick={() => setShowForm(false)}
+              className="px-4 min-h-11 inline-flex items-center rounded-lg bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium"
+            >
+              Cancel
+            </button>
           </div>
           {error && <p className="text-sm text-red-400">{error}</p>}
           <p className="text-xs text-gray-500">No lead linked means a personal task, just for you.</p>
         </div>
+        )}
 
         {loading ? (
           <p className="text-gray-400 text-sm">Loading tasks...</p>

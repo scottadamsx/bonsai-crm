@@ -309,11 +309,11 @@ export default function ContactDetailPage() {
             </div>
           )}
 
-          {/* Follow-ups for this lead */}
+          {/* Tasks for this lead */}
           <div className="bg-gray-900 border border-gray-800 rounded-lg p-4">
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-                <Clock className="w-4 h-4 text-gray-400" /> Follow-ups
+                <Clock className="w-4 h-4 text-gray-400" /> Tasks
               </h2>
               <button
                 onClick={() => setShowReminder(true)}
@@ -323,7 +323,7 @@ export default function ContactDetailPage() {
               </button>
             </div>
             {openReminders.length === 0 ? (
-              <p className="text-gray-500 text-sm">No open follow-ups.</p>
+              <p className="text-gray-500 text-sm">No open tasks.</p>
             ) : (
               <div className="space-y-2">
                 {openReminders.map((r) => (
@@ -357,7 +357,7 @@ export default function ContactDetailPage() {
               onClick={() => setShowReminder(true)}
               className="inline-flex items-center gap-1.5 px-4 py-2.5 min-h-11 rounded-lg bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium"
             >
-              <Clock className="w-4 h-4" /> Set Follow-up
+              <Clock className="w-4 h-4" /> Add Task
             </button>
             {contact.phone && (
               <a
@@ -584,7 +584,7 @@ function ReminderModal({ contactId, onClose }: { contactId: string; onClose: () 
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
       <div className="relative bg-gray-900 border border-gray-700 rounded-xl p-6 w-full max-w-md">
-        <h2 className="text-lg font-bold text-white mb-4">Set Follow-up</h2>
+        <h2 className="text-lg font-bold text-white mb-4">Add Task</h2>
         <form onSubmit={handleSubmit} className="space-y-3">
           <input
             required
@@ -603,7 +603,7 @@ function ReminderModal({ contactId, onClose }: { contactId: string; onClose: () 
           <div className="flex gap-3">
             <button type="button" onClick={onClose} className="flex-1 py-2.5 min-h-11 rounded-lg bg-gray-800 text-gray-300 text-sm hover:bg-gray-700">Cancel</button>
             <button type="submit" disabled={saving} className="flex-1 py-2.5 min-h-11 rounded-lg bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white text-sm font-medium">
-              {saving ? 'Saving...' : 'Set Follow-up'}
+              {saving ? 'Saving...' : 'Add Task'}
             </button>
           </div>
         </form>
