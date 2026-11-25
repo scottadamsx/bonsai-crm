@@ -119,12 +119,14 @@ export default async function DashboardPage() {
                 {due.map((r: any) => (
                   <Link
                     key={r.id}
-                    href={`/contacts/${r.contact_id}`}
+                    href={r.contact_id ? `/contacts/${r.contact_id}` : '/tasks'}
                     className="block px-4 py-3 rounded-lg bg-gray-800/50 hover:bg-gray-800 transition-colors"
                   >
                     <div className="text-sm font-medium text-white">{r.title}</div>
                     <div className="text-sm text-gray-400 mt-0.5">
-                      {r.contact?.business_name || `${r.contact?.first_name} ${r.contact?.last_name}`}
+                      {r.contact_id
+                        ? (r.contact?.business_name || `${r.contact?.first_name} ${r.contact?.last_name}`)
+                        : 'Personal task'}
                       {' · '}
                       <span className={r.due_date < today ? 'text-red-400' : ''}>
                         {r.due_date < today ? 'Overdue' : 'Due'} {r.due_date}

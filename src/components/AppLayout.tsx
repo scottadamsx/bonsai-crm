@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 import {
   LayoutDashboard,
   Inbox,
+  ListTodo,
   Users,
   Columns3,
   Activity,
@@ -29,6 +30,7 @@ const MOBILE_TABS = [
 
 const NAV_ITEMS = [
   { href: '/reminders', label: 'Inbox', icon: Inbox },
+  { href: '/tasks', label: 'Tasks', icon: ListTodo },
   { href: '/contacts', label: 'Leads', icon: Users },
   { href: '/pipeline', label: 'Pipeline', icon: Columns3 },
   { href: '/activities', label: 'Activities', icon: Activity },

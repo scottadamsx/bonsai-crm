@@ -114,9 +114,13 @@ export default function RemindersPage() {
         <div className="flex items-center justify-between">
           <div className="min-w-0 flex-1">
             <div className="font-medium text-white text-sm">{r.title}</div>
-            <Link href={`/contacts/${r.contact_id}`} className="text-sm text-gray-400 hover:text-white">
-              {r.contact?.business_name || `${r.contact?.first_name} ${r.contact?.last_name}`}
-            </Link>
+            {r.contact_id ? (
+              <Link href={`/contacts/${r.contact_id}`} className="text-sm text-gray-400 hover:text-white">
+                {r.contact?.business_name || `${r.contact?.first_name} ${r.contact?.last_name}`}
+              </Link>
+            ) : (
+              <div className="text-sm text-gray-500">Personal task</div>
+            )}
             <div className={`text-xs mt-0.5 ${isOverdue ? 'text-red-400 font-medium' : 'text-gray-500'}`}>
               {snoozed
                 ? `Snoozed until ${r.snoozed_until}`
@@ -297,9 +301,13 @@ export default function RemindersPage() {
                   <div key={r.id} className="flex items-center justify-between py-3 min-h-11">
                     <div className="min-w-0">
                       <div className="text-sm text-gray-300 truncate">{r.title}</div>
-                      <Link href={`/contacts/${r.contact_id}`} className="text-sm text-gray-500 hover:text-white">
-                        {r.contact?.business_name || `${r.contact?.first_name} ${r.contact?.last_name}`}
-                      </Link>
+                      {r.contact_id ? (
+                        <Link href={`/contacts/${r.contact_id}`} className="text-sm text-gray-500 hover:text-white">
+                          {r.contact?.business_name || `${r.contact?.first_name} ${r.contact?.last_name}`}
+                        </Link>
+                      ) : (
+                        <div className="text-sm text-gray-500">Personal task</div>
+                      )}
                     </div>
                     <span className="font-mono text-[11px] text-gray-500 shrink-0 ml-3">
                       Done {r.completed_at ? new Date(r.completed_at).toLocaleDateString() : ''}

@@ -53,7 +53,7 @@ export interface Activity {
 
 export interface Reminder {
   id: string
-  contact_id: string
+  contact_id: string | null
   title: string
   due_date: string
   snoozed_until: string | null
