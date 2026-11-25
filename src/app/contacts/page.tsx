@@ -18,6 +18,7 @@ export default function ContactsPage() {
   const [filterStatus, setFilterStatus] = useState('')
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
+  const [showCategoryPicker, setShowCategoryPicker] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -57,7 +58,19 @@ export default function ContactsPage() {
     return matchSearch && matchType && matchCategory && matchStatus
   })
 
-  const categories = [...new Set(contacts.map(c => c.category).filter((c): c is string => Boolean(c)))]
+  const categoryCounts = new Map<string, number>()
+  for (const c of contacts) {
+    if (c.category) categoryCounts.set(c.category, (categoryCounts.get(c.category) || 0) + 1)
+  }
+  const categories = [...categoryCounts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([cat]) => cat)
+  // Only the most-used categories earn a chip; the rest live in the picker modal.
+  const TOP_CATEGORY_COUNT = 8
+  const topCategories = categories.slice(0, TOP_CATEGORY_COUNT)
+  const visibleCategories = filterCategory && !topCategories.includes(filterCategory)
+    ? [...topCategories, filterCategory]
+    : topCategories
 
   const pill = (active: boolean) =>
     `min-h-11 px-4 rounded-full border text-sm transition-colors ${
@@ -108,11 +121,16 @@ export default function ContactsPage() {
           <button onClick={() => setFilterCategory('')} className={pill(filterCategory === '')}>
             All categories
           </button>
-          {categories.map((cat) => (
+          {visibleCategories.map((cat) => (
             <button key={cat} onClick={() => setFilterCategory(cat)} className={pill(filterCategory === cat)}>
               {cat}
             </button>
           ))}
+          {categories.length > TOP_CATEGORY_COUNT && (
+            <button onClick={() => setShowCategoryPicker(true)} className={pill(false)}>
+              More categories ({categories.length - TOP_CATEGORY_COUNT})
+            </button>
+          )}
         </div>
       )}
       <div className="flex flex-wrap gap-2 mb-5">
@@ -247,7 +265,61 @@ export default function ContactsPage() {
       )}
 
       {showAdd && <AddContactModal onClose={() => { setShowAdd(false); fetchContacts() }} />}
+      {showCategoryPicker && (
+        <CategoryPickerModal
+          categories={categories.map((cat) => ({ name: cat, count: categoryCounts.get(cat) || 0 }))}
+          current={filterCategory}
+          onSelect={(cat) => { setFilterCategory(cat); setShowCategoryPicker(false) }}
+          onClose={() => setShowCategoryPicker(false)}
+        />
+      )}
     </AppLayout>
+  )
+}
+
+function CategoryPickerModal({ categories, current, onSelect, onClose }: {
+  categories: { name: string; count: number }[]
+  current: string
+  onSelect: (cat: string) => void
+  onClose: () => void
+}) {
+  const [query, setQuery] = useState('')
+  const shown = categories.filter((c) => c.name.toLowerCase().includes(query.toLowerCase()))
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+      <div className="relative bg-gray-900 border border-gray-700 rounded-xl p-6 w-full max-w-md max-h-[90vh] flex flex-col">
+        <h2 className="text-lg font-bold text-white mb-4">Categories</h2>
+        <input
+          autoFocus
+          placeholder="Search categories..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="w-full px-3 py-2.5 min-h-11 rounded-lg bg-gray-800 border border-gray-700 text-white text-base mb-3"
+        />
+        <div className="overflow-y-auto -mx-2 px-2">
+          <button
+            onClick={() => onSelect('')}
+            className={`w-full flex items-center justify-between px-3 min-h-11 rounded-lg text-sm ${current === '' ? 'bg-gray-100 text-gray-950 font-medium' : 'text-gray-200 hover:bg-gray-800'}`}
+          >
+            <span>All categories</span>
+          </button>
+          {shown.map((c) => (
+            <button
+              key={c.name}
+              onClick={() => onSelect(c.name)}
+              className={`w-full flex items-center justify-between gap-3 px-3 min-h-11 rounded-lg text-sm ${current === c.name ? 'bg-gray-100 text-gray-950 font-medium' : 'text-gray-200 hover:bg-gray-800'}`}
+            >
+              <span className="truncate text-left">{c.name}</span>
+              <span className="font-mono text-xs text-gray-500">{c.count}</span>
+            </button>
+          ))}
+          {shown.length === 0 && (
+            <p className="text-gray-500 text-sm px-3 py-4">No categories match that search.</p>
+          )}
+        </div>
+      </div>
+    </div>
   )
 }
 
