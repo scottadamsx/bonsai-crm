@@ -68,6 +68,40 @@ export default function ContactDetailPage() {
     setCType(t)
     setCOpen(true)
   }
+  // Inline edit/delete for logged activities. Only one activity is in edit
+  // or delete-confirm mode at a time; opening one closes the other.
+  const [editActId, setEditActId] = useState<string | null>(null)
+  const [delActId, setDelActId] = useState<string | null>(null)
+  const [eaSubject, setEaSubject] = useState('')
+  const [eaBody, setEaBody] = useState('')
+  const [eaError, setEaError] = useState('')
+  const [eaSaving, setEaSaving] = useState(false)
+  const openActEdit = (a: Activity) => {
+    setDelActId(null)
+    setEaError('')
+    setEaSubject(a.subject || '')
+    setEaBody(a.body || '')
+    setEditActId(a.id)
+  }
+  const actHasSubject = (a: Activity) => !!(a.subject || a.type === 'email' || a.type === 'note')
+  const saveActEdit = async (a: Activity) => {
+    setEaSaving(true)
+    const subject = actHasSubject(a) ? (eaSubject || null) : a.subject
+    const body = eaBody || null
+    const { error } = await supabase.from('activities').update({ subject, body }).eq('id', a.id)
+    setEaSaving(false)
+    if (error) { setEaError(error.message); return }
+    setActivities(activities.map((x) => (x.id === a.id ? { ...x, subject, body } : x)))
+    setEditActId(null)
+    setEaError('')
+  }
+  const deleteActivity = async (a: Activity) => {
+    const { error } = await supabase.from('activities').delete().eq('id', a.id)
+    if (error) { setEaError(error.message); return }
+    setActivities(activities.filter((x) => x.id !== a.id))
+    setDelActId(null)
+    setEaError('')
+  }
   const supabase = createClient()
 
   const changeStatus = async (value: string) => {
@@ -468,9 +502,86 @@ export default function ContactDetailPage() {
                         <span className="font-mono text-[11px] text-gray-500">
                           {new Date(a.created_at).toLocaleString()}
                         </span>
+                        {editActId !== a.id && delActId !== a.id && (
+                          <>
+                            <button
+                              onClick={() => openActEdit(a)}
+                              aria-label="Edit activity"
+                              className="p-2.5 rounded-lg text-gray-500 hover:text-white hover:bg-gray-800"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => { setEditActId(null); setEaError(''); setDelActId(a.id) }}
+                              aria-label="Delete activity"
+                              className="p-2.5 rounded-lg text-gray-500 hover:text-white hover:bg-gray-800"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
                       </div>
-                      {a.subject && <div className="text-sm text-gray-300 mt-0.5">{a.subject}</div>}
-                      {a.body && <div className="text-sm text-gray-400 mt-0.5 whitespace-pre-wrap">{a.body}</div>}
+                      {delActId === a.id ? (
+                        <div className="mt-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sm text-gray-300">Delete this activity?</span>
+                            <button
+                              onClick={() => deleteActivity(a)}
+                              className="px-4 py-2.5 min-h-11 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium"
+                            >
+                              Delete
+                            </button>
+                            <button
+                              onClick={() => { setDelActId(null); setEaError('') }}
+                              className="px-4 py-2.5 min-h-11 rounded-lg bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                          {eaError && <p className="text-sm text-red-400 mt-1">{eaError}</p>}
+                        </div>
+                      ) : editActId === a.id ? (
+                        <div className="mt-2">
+                          {actHasSubject(a) && (
+                            <input
+                              type="text"
+                              placeholder="Subject (optional)"
+                              value={eaSubject}
+                              onChange={(e) => setEaSubject(e.target.value)}
+                              className="w-full px-3 py-2.5 min-h-11 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm mb-2"
+                            />
+                          )}
+                          <textarea
+                            placeholder="Notes..."
+                            rows={3}
+                            value={eaBody}
+                            onChange={(e) => setEaBody(e.target.value)}
+                            className="w-full px-3 py-2.5 min-h-11 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm"
+                          />
+                          {eaError && <p className="text-sm text-red-400 mt-1">{eaError}</p>}
+                          <div className="flex gap-2 mt-2">
+                            <button
+                              onClick={() => saveActEdit(a)}
+                              disabled={eaSaving}
+                              className="px-4 py-2.5 min-h-11 rounded-lg bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white text-sm font-medium"
+                            >
+                              {eaSaving ? 'Saving...' : 'Save'}
+                            </button>
+                            <button
+                              onClick={() => { setEditActId(null); setEaError('') }}
+                              disabled={eaSaving}
+                              className="px-4 py-2.5 min-h-11 rounded-lg bg-gray-800 hover:bg-gray-700 disabled:opacity-50 text-white text-sm font-medium"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          {a.subject && <div className="text-sm text-gray-300 mt-0.5">{a.subject}</div>}
+                          {a.body && <div className="text-sm text-gray-400 mt-0.5 whitespace-pre-wrap">{a.body}</div>}
+                        </>
+                      )}
                     </div>
                   </div>
                 ))}
